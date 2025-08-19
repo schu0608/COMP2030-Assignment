@@ -37,6 +37,7 @@
 
 
 
+
 Hardware / Software
 Primary Laptop — MacBook Pro (14-inch, M2, 16GB RAM, 512GB SSD)
     Operating System: macOS Ventura
@@ -57,4 +58,3 @@ Mobile Device — iPhone 14 Pro
     Key Apps Installed:
         Productivity: Google Drive, Canva, Microsoft Teams, Trello
         Communication: Messenger, Discord, Zoom
-
