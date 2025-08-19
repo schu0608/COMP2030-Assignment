@@ -57,5 +57,3 @@ Mobile Device — iPhone 14 Pro
     Key Apps Installed:
         Productivity: Google Drive, Canva, Microsoft Teams, Trello
         Communication: Messenger, Discord, Zoom
-
-
