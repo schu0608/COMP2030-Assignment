@@ -1,32 +1,3 @@
-# Project Proposal
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # User Research Report
 ## Research Methods
 
@@ -39,39 +10,47 @@
 
 ## Personas
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### User Persona 2: Steve Admin
+#### ![Steve Admin https://depositphotos.com/photos/man-on-computer.html](imgs/Steve-Admin-IMG.jfif)
 #### Demographics
 ##### Age: 34
-##### Role: Graduate IT Support Officer, Flinders University
+##### Education: Masters of IT
+##### Role: IT Support Officer, Flinders University
 ##### Location: Adelaide, SA
-##### Photo: 
-Goals, Motivations, and Needs
-Ensure the platform runs smoothly and securely.
-Wants to identify bugs, manage database integrity, and prevent abuse (e.g., fake accounts or credit gaming).
-Needs admin tools for monitoring transactions and system performance.
-Motivated by improving student digital experiences at Flinders.
-Technical Proficiency & Device Usage
-High technical proficiency (background in software and databases).
-Primarily uses a desktop with dual monitors at the IT office.
-Uses his phone to check urgent notifications after hours.
-Scenario
-James receives an alert that several students are creating multiple accounts to transfer FUSSCredits unfairly. He uses the admin panel to trace transaction histories, identifies suspicious patterns, and merges duplicate accounts. He then updates the “anti-gaming” script to prevent similar abuse in the future.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+##### Goals, Motivations, and Needs:
+- Ensure the platform runs smoothly and securely.
+- Wants to identify bugs, manage database integrity, and prevent abuse (e.g., fake accounts or credit farming).
+- Needs admin tools for monitoring transactions and system performance.
+- Motivated by improving student digital experiences at Flinders.
+##### Technical Proficiency & Device Usage:
+- High technical proficiency (background in software and databases).
+- Primarily uses a desktop with dual monitors at the IT office.
+- Uses his phone to check urgent notifications after hours.
+##### Scenario:
+Steve receives an alert that several students are creating multiple accounts to transfer FUSSCredits unfairly. He uses the admin panel to trace transaction histories, identifies suspicious patterns, and merges duplicate accounts. He then updates the “anti-farming" script to prevent similar abuse in the future.
 
 ## Competitor Analysis
 ### 1. Timebanking
@@ -117,38 +96,3 @@ James receives an alert that several students are creating multiple accounts to 
 - No structured credit system: Exchanges usually require money, not time/credits.
 - Trust & safety issues: No guarantees on reliability, service completion, or fairness.
 - Poor discoverability: Searching through posts is messy compared to structured filters/search.
-
-
-
-
-# Information Architecture
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Low-Fidelity Wireframes
