@@ -10,7 +10,7 @@ Backend Interaction: Queries MySQL database for skills based on filters; PHP bac
 
 -------------------------------------
 
-Landing : Login Page.png
+Landing : Login Page . png
 
 Design Choices: Hero section with headline slogan + CTA buttons (“Register Now”, “Login Here”). Key benefits listed as bullet points. Testimonial at the bottom builds trust.
 
