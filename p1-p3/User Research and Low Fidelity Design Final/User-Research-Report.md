@@ -43,6 +43,29 @@ A way to gather insights about Flinders students is to conduct surveys across th
 ##### Scenario:
 Steve receives an alert that several students are creating multiple accounts to transfer FUSSCredits unfairly. He uses the admin panel to trace transaction histories, identifies suspicious patterns, and merges duplicate accounts. He then updates the “anti-farming" script to prevent similar abuse in the future.
 
+### User Persona 3: Alex Study
+#### !![Alex Study](imgs/alex-study.png)
+#### Tagline
+"I want to improve my coding skills while helping my peers."
+#### Demographics
+##### Age: 18
+##### Education: 1st-year Computer Science
+##### Role: Student, Flinders University
+##### Location: Adelaide, SA
+##### Goals, Motivations, and Needs:
+- Wants to improve programming skills.
+- Needs access to tutors and peer guidance.
+- Motivated to exchange skills to earn learning credits.
+- Wants a clear, easy-to-use system for scheduling sessions.
+##### Technical Proficiency & Device Usage:
+- Comfortable using phone, laptop, and social media.
+- Uses modern apps; keeps software updated.
+##### Grokkability & Personality:
+- Enjoys guitar and volunteering.
+- Curious, patient, helpful; dislikes unstructured sessions.
+##### Scenario:
+Alex logs into FUSS, finds a tutor, schedules a session, pays with credits earned, leaves a review, and updates their profile with new skills.
+
 ## Competitor Analysis
 ### 1. Timebanking
 #### Key Features:
