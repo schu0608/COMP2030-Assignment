@@ -1,19 +1,17 @@
 # User Research Report
+## Research Methods
 A way to gather insights about Flinders students is to conduct surveys across the campus to have the students share about skills and requests in ways that would motivate the students to use FUSS. In addition to doing surveys, interviewing students across the science, arts, and engineering colleges, to really focus and understand the pain points. Although these options are interactive, a less interactive way of getting information is going through competitor analysis, such as Facebook marketplace, Gumtree, Fiverr and Uni peer support services.
-
-#### Personas 1: 
-- Bob student
-##### Age: 
-- 18
-#### degree:
-- 1st year comp-sci student 
-#### Location: 
-- Adelaide, SA
-##### Skills offerd: 
+## Personas
+### User Persona 1: Bob Student
+#### ![Bob Student](imgs/Bob-Student-IMG.png)
+##### Age: 18
+##### Degree: 1st year comp-sci student 
+##### Location: Adelaide, SA
+##### Skills offered: 
 - Soldering skills
 - Basic math skills
 ##### Skills requested: 
-- Learn how to code as he feels like he is behind compared to other students, this can distrubt his mental health.
+- Learn how to code as he feels like he is behind compared to other students, this can distrupt his mental health.
 ##### Goals: 
 - Wants to get good at writing code so he can feel up to date.
 - Wants to get a feel of proudness through getting good at coding.
