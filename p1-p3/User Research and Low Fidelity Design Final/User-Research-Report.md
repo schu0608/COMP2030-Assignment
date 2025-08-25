@@ -25,7 +25,7 @@ A way to gather insights about Flinders students is to conduct surveys across th
 - User logs into FUSS and searches for coding tutors, finds a tutor that can help with COMP1101 and then proceeds to pay with the credit they have with the soldering skills that they have when helping students in ENGR2792
 
 ### User Persona 2: Steve Admin
-#### ![Steve Admin https://depositphotos.com/photos/man-on-computer.html](imgs/Steve-Admin-IMG.jfif)
+#### ![Steve Admin https://depositphotos.com/photos/man-on-computer.html](imgs/Steve-Admin-IMG.png)
 #### Demographics
 ##### Age: 34
 ##### Education: Masters of IT
