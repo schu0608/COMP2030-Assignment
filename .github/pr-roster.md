@@ -11,7 +11,7 @@ The process for submitting PRs is to:
 1. update this list so that the next person is checked.
 
 ## Team members
+- [ ] Karl (@mart0981)
 - [x] Group member name (@groupmemberhandle)
-- [ ] Group member name (@groupmemberhandle)
 - [ ] Group member name (@groupmemberhandle)
 - [ ] Group member name (@groupmemberhandle)

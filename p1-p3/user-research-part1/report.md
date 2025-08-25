@@ -1,5 +1,4 @@
-# User Research Report
-A way to gather insights about Flinders students is to conduct surveys across the campus to have the students share about skills and requests in ways that would motivate the students to use FUSS. In addition to doing surveys, interviewing students across the science, arts, and engineering colleges, to really focus and understand the pain points. Although these options are interactive, a less interactive way of getting information is going through competitor analysis, such as Facebook marketplace, Gumtree, Fiverr and Uni peer support services.
+
 
 #### Personas 1: 
 - Bob student
