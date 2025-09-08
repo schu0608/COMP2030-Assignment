@@ -1,5 +1,5 @@
 # Use the base PHP Apache image
-FROM php:8.2-apache
+FROM mcr.microsoft.com/devcontainers/php:0-8.2
 
 # Install common development tools including git and sudo.
 # 'sudo' is included for general utility, though permissions often work without it.
