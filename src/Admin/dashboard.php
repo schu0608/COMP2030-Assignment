@@ -20,14 +20,14 @@ if ($res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM students WHERE active=
   if ($row = mysqli_fetch_assoc($res)) $activeStudents = (int)$row['c'];
 }
 
-// Active services (adjust to your definition)
+// Active services (adjust if your definition differs)
 if ($res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM transactions WHERE status IN ('pending','confirmed')")) {
   if ($row = mysqli_fetch_assoc($res)) $activeServices = (int)$row['c'];
 }
 
-// Average credits
+// Average credits (note the exact column name)
 if ($res = mysqli_query($conn, "SELECT ROUND(AVG(fuss_credits),2) AS avgc FROM students")) {
-  if ($row = mysqli_fetch_assoc($res)) $avgCredits = (float)$row['avgc'];
+  if ($row = mysqli_fetch_assoc($res)) $avgCredits = (float)($row['avgc'] ?? 0);
 }
 
 // Popular skills (top 3 offered)
@@ -48,7 +48,9 @@ if ($res = mysqli_query($conn, $sql)) {
   <li><strong>Active Students:</strong> <?= $activeStudents ?></li>
   <li><strong>Active Services:</strong> <?= $activeServices ?></li>
   <li><strong>Ave FUSSCredits (approx dist):</strong> <?= number_format($avgCredits, 2) ?></li>
-  <li><strong>Most Popular Skill:</strong> <?= count($popular) ? htmlspecialchars(implode(', ', $popular)) : '—' ?></li>
+  <li><strong>Most Popular Skill:</strong>
+    <?= !empty($popular) ? htmlspecialchars(implode(', ', $popular)) : '—' ?>
+  </li>
 </ul>
 
 <nav>
