@@ -19,6 +19,7 @@
 <h1>Student Management</h1>
 <p><a href="dashboard.php">← Back to Dashboard</a></p>
 
+
 <?php
 // ------ helpers ------
 function post($k,$d=null){ return isset($_POST[$k])?$_POST[$k]:$d; }
