@@ -4,35 +4,52 @@
 <h1>Admin Dashboard</h1>
 
 <?php
-// the active students 
+// safe defaults so there's never an "undefined variable"
 $activeStudents = 0;
-$res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM students WHERE active=1");
-if ($res) { $activeStudents = (int)mysqli_fetch_assoc($res)['c'];}
+$activeServices = 0;   // adjust query below to what "service" means in your schema
+$avgCredits     = 0.0;
+$popular        = [];
 
-// active services (adjust/filter to mathch schema)
-$activeServices = 0;
-$res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM services WHERE status='active'");
-if ($res) { $activeServices = (int)mysqli_fetch_assoc($res)['c'];}
+// --- Active students ---
+if ($res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM students WHERE active=1")) {
+  if ($row = mysqli_fetch_assoc($res)) $activeStudents = (int)$row['c'];
+}
 
-//average credits (quick look at distribution)
-$avgCredits = 0;
-$res = mysqli_query($conn, "SELECT skill, COUNT(*) AS total FROM skills GROUP BY skill ORDER BY total DESC LIMIT 1");
-if ($res) { while($row = mysqli_fetch_assoc($res)) { // $popular[] = $row;['skill']; } }
-    $avgCredits = $row['skill'] . " ({$row['total']} entries)";
-}}
+// --- Active services (example: pending transactions = 'active') ---
+if ($res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM transactions WHERE status='pending'")) {
+  if ($row = mysqli_fetch_assoc($res)) $activeServices = (int)$row['c'];
+}
+
+// --- Average FUSS credits (use your column name fuss_credits) ---
+if ($res = mysqli_query($conn, "SELECT ROUND(AVG(fuss_credits),2) AS avgc FROM students")) {
+  if ($row = mysqli_fetch_assoc($res)) $avgCredits = (float)$row['avgc'];
+}
+
+// --- Popular skills (top 3 offered) ---
+$sql = "
+  SELECT s.name, COUNT(*) AS total
+  FROM student_skills ss
+  JOIN skills s ON s.skill_id = ss.skill_id
+  WHERE ss.role='offered'
+  GROUP BY s.name
+  ORDER BY total DESC
+  LIMIT 3
+";
+if ($res = mysqli_query($conn, $sql)) {
+  while ($row = mysqli_fetch_assoc($res)) $popular[] = $row['name'];
+}
 ?>
-
 <ul>
-    <li><strong>Active Students:</strong> <?php echo $activeStudents; ?></li>
-    <li><strong>Active Services:</strong> <?php echo $activeServices; ?></li>
-    <li><strong>Ave FUSSCredits (approx dist):</strong> <?= $aveCredit ?></li>
-    <li><strong>Most Popular Skill:</strong> <?= htmlspecialchars(implode(", ", $popular)); ?></li>
+  <li><strong>Active Students:</strong> <?= $activeStudents ?></li>
+  <li><strong>Active Services:</strong> <?= $activeServices ?></li>
+  <li><strong>Ave FUSSCredits (approx dist):</strong> <?= number_format($avgCredits, 2) ?></li>
+  <li><strong>Most Popular Skill:</strong> <?= count($popular) ? htmlspecialchars(implode(", ", $popular)) : "—" ?></li>
 </ul>
 
-  <nav>
-  <li><a href="/admin/students.php">Student Management</a></li>
-  <li><a href="/admin/credits.php">Credit Adjustment</a></li>
-  <li><a href="/admin/skills.php">Skill & Category Management</a></li>
-  <li><a href="/admin/moderation.php">Content Moderation</a></li>
-  </nav>
+<nav>
+  <a href="students.php">Student Management</a> |
+  <a href="credits.php">Credit Adjustment</a> |
+  <a href="skills.php">Skills & Categories</a> |
+  <a href="moderation.php">Content Moderation</a>
+</nav>
 </body></html>
