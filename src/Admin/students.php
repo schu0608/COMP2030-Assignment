@@ -4,7 +4,7 @@
 <p>List of students, with options to edit, deactivate/reactivate, or delete accounts.</p>
 
 <?php
-// handkle actions
+// handle actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     $id =(int)$_POST['id'];
     $name = trim($_POST['name'] ?? '');
