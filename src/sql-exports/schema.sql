@@ -2,7 +2,7 @@ CREATE DATABASE fussdb;
 USE fussdb;
 
 CREATE TABLE students (
-    student_id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id VARCHAR AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(100) NOT NULL,
     full_name VARCHAR(100) NOT NULL,
@@ -10,7 +10,6 @@ CREATE TABLE students (
     college VARCHAR(100),
     academic_year INT,
     bio TEXT,
-    profile_picture VARCHAR(200),
     fuss_credits DECIMAL(6,2) DEFAULT 0
 );
 
