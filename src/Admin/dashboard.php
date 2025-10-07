@@ -15,22 +15,22 @@ $activeServices = 0;
 $avgCredits     = 0.0;
 $popular        = [];
 
-// Active students
+/** Active students */
 if ($res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM students WHERE active=1")) {
   if ($row = mysqli_fetch_assoc($res)) $activeStudents = (int)$row['c'];
 }
 
-// Active services (adjust if your definition differs)
+/** Active services (use transactions; adjust statuses as you like) */
 if ($res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM transactions WHERE status IN ('pending','confirmed')")) {
   if ($row = mysqli_fetch_assoc($res)) $activeServices = (int)$row['c'];
 }
 
-// Average credits (note the exact column name)
+/** Average FUSS credits */
 if ($res = mysqli_query($conn, "SELECT ROUND(AVG(fuss_credits),2) AS avgc FROM students")) {
   if ($row = mysqli_fetch_assoc($res)) $avgCredits = (float)($row['avgc'] ?? 0);
 }
 
-// Popular skills (top 3 offered)
+/** Popular skills (top 3 offered) */
 $sql = "
   SELECT s.name, COUNT(*) AS total
   FROM student_skills ss
@@ -54,9 +54,10 @@ if ($res = mysqli_query($conn, $sql)) {
 </ul>
 
 <nav>
+  <!-- use relative links matching your structure (src/Admin/...) -->
   <a href="students.php">Student Management</a> |
   <a href="credits.php">Credit Adjustment</a> |
-  <a href="skills.php">Skills & Categories</a> |
+  <a href="skills.php">Skill & Category Management</a> |
   <a href="moderation.php">Content Moderation</a>
 </nav>
 </body>
