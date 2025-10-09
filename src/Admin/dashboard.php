@@ -163,7 +163,6 @@ if ($res = mysqli_query($conn, $sql)) {
       </div>
     </section>
 
-    <div class="foot">FUSS Admin · <?= date('Y') ?></div>
   </div>
 </body>
 </html>
