@@ -1,46 +1,72 @@
 <?php require_once __DIR__."/../inc/dbconn.inc.php"; ?>
-<!doctype html><html><body><h1>Credit Adjustment</h1></body></html>
-<p><a href="dashboard.php">Back to Dashboard</a></p>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Admin • Credit Adjustment</title>
+  <style>
+    body{font-family:system-ui,Arial,sans-serif;margin:20px}
+    form label{display:block;margin:8px 0}
+  </style>
+</head>
+<body>
+<h1>FUSSCredit Adjustment</h1>
+<p><a href="dashboard.php">← Back to Dashboard</a></p>
 
 <?php
 $msg = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = (int)$_PST['student_id'];
-    $amount = (int)$_POST['amount'];
+    $id     = (int)($_POST['student_id'] ?? 0);
+    $amount = (float)($_POST['amount'] ?? 0);
 
-    $curRES = mysqli_query($conn, "SELECT credits FROM students WHERE id=$id");
-    if ($curRES && $curRow = mysqli_fetch_assoc($curRES)) {
-        $new = max(0, (int)$curRow['credits'] + $amount); // no negative balence
-        $stmt = mysqli_prepare($conn, "UPDATE students SET credits=? WHERE id=?");
-        mysqli_stmt_bind_param($stmt, "ii", $new, $id);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-        $msg = "Updated student #$id credits to $new.";
+    // get current balance
+    if ($id > 0) {
+        $curRes = mysqli_query($conn, "SELECT fuss_credits FROM students WHERE student_id = $id");
+        if ($curRes && $curRow = mysqli_fetch_assoc($curRes)) {
+            $current = (float)$curRow['fuss_credits'];
+            $new     = max(0, $current + $amount); // no negative balances
+
+            $stmt = mysqli_prepare($conn, "UPDATE students SET fuss_credits=? WHERE student_id=?");
+            mysqli_stmt_bind_param($stmt, "di", $new, $id);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+
+            $msg = "Updated student #$id credits: $current → $new";
+        } else {
+            $msg = "Student not found.";
+        }
     } else {
-        $msg = "Student ID not found.";
+        $msg = "Please choose a student.";
     }
 }
 ?>
-<?php if ($msg) { echo "<p>".htmlspecialchars($msg)."</p>"; } ?>
+
+<?php if ($msg): ?>
+  <p><strong><?= htmlspecialchars($msg) ?></strong></p>
+<?php endif; ?>
+
 <form method="post">
-    <label>Student ID: 
-        <select name="student_id" required>
-            <option value="">-- choose --</option>
-            <?php
-            $students = mysqli_query($conn, "SELECT id, name, credits FROM students ORDER BY name");
-                  while($s = $students && mysqli_fetch_assoc($students)):
-      ?>
-        <option value="<?= (int)$s['id'] ?>">
-          <?= htmlspecialchars($s['name']) ?> (current: <?= (int)$s['credits'] ?>)
+  <label>Student:
+    <select name="student_id" required>
+      <option value="">-- choose --</option>
+      <?php
+      // list students by name with current balance
+      $students = mysqli_query($conn, "SELECT student_id, full_name, fuss_credits FROM students ORDER BY full_name");
+      while ($s = $students && mysqli_fetch_assoc($students)): ?>
+        <option value="<?= (int)$s['student_id'] ?>">
+          <?= htmlspecialchars($s['full_name']) ?> (current: <?= (float)$s['fuss_credits'] ?>)
         </option>
       <?php endwhile; ?>
     </select>
   </label>
-  <label>Amount (+/-):
-    <input type="number" name="amount" required>
+
+  <label>Amount (+/- hours):
+    <input type="number" step="0.01" name="amount" required>
   </label>
+
   <button type="submit">Apply</button>
 </form>
-</body></html>
-                
+
+</body>
+</html>
