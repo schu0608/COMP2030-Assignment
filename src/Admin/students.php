@@ -4,6 +4,8 @@
 <head>
   <meta charset="utf-8">
   <title>Admin • Students</title>
+  <link rel="stylesheet" href="../css/style.css">
+
   <style>
     :root { --b:#e5e7eb; --bg:#f9fafb; --fg:#111827; --mut:#6b7280; }
     body{font-family:system-ui,Arial,sans-serif;margin:24px;color:var(--fg);background:var(--bg)}
