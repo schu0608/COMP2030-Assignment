@@ -4,6 +4,8 @@
 <head>
   <meta charset="utf-8">
   <title>Admin • Credit Adjustment</title>
+  <link rel="stylesheet" href="../css/style.css">
+
   <style>
     body{font-family:system-ui,Arial,sans-serif;margin:20px}
     form label{display:block;margin:8px 0}

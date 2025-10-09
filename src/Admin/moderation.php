@@ -4,6 +4,8 @@
 <head>
   <meta charset="utf-8">
   <title>Admin • Content Moderation</title>
+  <link rel="stylesheet" href="../css/style.css">
+
   <style>
     body{font-family:system-ui,Arial,sans-serif;margin:20px}
     table{border-collapse:collapse;width:100%}
