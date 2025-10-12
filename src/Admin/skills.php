@@ -1,71 +1,165 @@
 <?php require_once __DIR__."/../inc/dbconn.inc.php"; ?>
-<!doctype html><html><body><h1>Skills & Categories</h1></body></html>
-<p><a href="dashboard.php">Back to Dashboard</a></p>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Admin • Skills & Categories</title>
+  <link rel="stylesheet" href="/COMP2030-ASSIGNMENT/src/css/style.css?v=7">
+</head>
+<body class="admin">
+<div class="container">
+  <header style="margin-bottom:12px">
+    <h1>Skills & Categories</h1>
+    <p class="sub">Manage the pre-defined list of categories and specific skills.</p>
+    <p><a href="dashboard.php">← Back to Dashboard</a></p>
+  </header>
 
 <?php
-// handle actions (add, edit, delete skills/categories) - left as an exercise
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ISSET($_PST['add'])) {
-    $catergory = trim($_POST['category']);
-    $skill = trim($_POST['skill']);
-    $topics = trim($_POST['topics']); // comma separated
-    $stmt = mysqli_prepare($conn, "UPDATE skills SEt catergory=?, skill=?, topics=? WHERE id=?");
-    mysqli_stmt_bind_param($stmt, "sssi", $catergory, $skill, $topics, $id);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
-    echo "<p>Added skill ".htmlspecialchars($skill). "</p>";
+$msg = "";
 
-    //handle update 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ISSET($_PST['update'])) {
-        $id = (int)$_POST['id'];
-        $catergory = trim($_POST['category']);
-        $skill = trim($_POST['skill']);
-        $topics = trim($_POST['topics']); // comma separated
-        $stmt = mysqli_prepare($conn, "UPDATE skills SEt catergory=?, skill=?, topics=? WHERE id=?");
-        mysqli_stmt_bind_param($stmt, "sssi", $catergory, $skill, $topics, $id);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-        echo "<p>Updated skill #".htmlspecialchars($id). "</p>";
+/* Detect details column (description vs topics) */
+$detailsCol = 'description';
+$colRes = mysqli_query(
+  $conn,
+  "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='skills'
+     AND COLUMN_NAME IN ('description','topics')"
+);
+if ($colRes && ($c = mysqli_fetch_assoc($colRes))) $detailsCol = $c['COLUMN_NAME'];
+
+/* ADD */
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['add'])) {
+  $category = trim($_POST['category'] ?? "");
+  $name     = trim($_POST['name'] ?? "");
+  $details  = trim($_POST['details'] ?? "");
+  if ($category && $name) {
+    $sql  = $detailsCol==='topics'
+          ? "INSERT INTO skills (name,category,topics) VALUES (?,?,?)"
+          : "INSERT INTO skills (name,category,description) VALUES (?,?,?)";
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+      $msg = "Add failed: ".mysqli_error($conn);
+    } else {
+      mysqli_stmt_bind_param($stmt,"sss",$name,$category,$details);
+      if (mysqli_stmt_execute($stmt)) {
+        $msg = "Added skill: ".htmlspecialchars($name);
+      } else {
+        $msg = "Add failed: ".htmlspecialchars(mysqli_stmt_error($stmt));
+      }
+      mysqli_stmt_close($stmt);
     }
-    //handle delete
-    if (isset($_GET['delete'])) {
-        $id = (int)$_GET['delete'];
-        mysqli_query($conn, "DELETE FROM skills WHERE id=$id");
-        echo "<p>Deleted skill #".htmlspecialchars($id). "</p>";
-    }   
-
-    ?>
-
-<h2>Add Skill</h2>
-<form method="post">
-  <input name="category" placeholder="Category (e.g., Academic, Tech Support)" required>
-  <input name="skill" placeholder="Skill (e.g., COMP2030 Tutoring)" required>
-  <input name="topics" placeholder="Topics (comma-separated)">
-  <button name="add" value="1">Add</button>
-</form>
-
-<h2>All Skills</h2>
-<table border="1" cellpadding="8" cellspacing="0">
-  <tr><th>ID</th><th>Category</th><th>Skill</th><th>Topics</th><th>Actions</th></tr>
-  <?php
-  $res = mysqli_query($conn, "SELECT id, category, skill, topics FROM skills ORDER BY category, skill");
-  while($r = $res && mysqli_fetch_assoc($res)): ?>
-    <tr>
-      <td><?= (int)$r['id'] ?></td>
-      <td>
-        <form method="post" style="display:inline">
-          <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-          <input name="category" value="<?= htmlspecialchars($r['category']) ?>">
-      </td>
-      <td><input name="skill" value="<?= htmlspecialchars($r['skill']) ?>"></td>
-      <td><input name="topics" value="<?= htmlspecialchars($r['topics']) ?>"></td>
-      <td>
-          <button name="update" value="1">Save</button>
-          <a href="?delete=<?= (int)$r['id'] ?>" onclick="return confirm('Delete this skill?')">Delete</a>
-        </form>
-      </td>
-    </tr>
-  <?php endwhile; ?>
-</table>
-</body></html>
-<?php
+  } else {
+    $msg = "Category and Skill are required.";
+  }
 }
+
+/* UPDATE */
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
+  $id       = (int)($_POST['skill_id'] ?? 0);
+  $category = trim($_POST['category'] ?? "");
+  $name     = trim($_POST['name'] ?? "");
+  $details  = trim($_POST['details'] ?? "");
+  if ($id && $category && $name) {
+    $sql  = $detailsCol==='topics'
+          ? "UPDATE skills SET name=?, category=?, topics=? WHERE skill_id=?"
+          : "UPDATE skills SET name=?, category=?, description=? WHERE skill_id=?";
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+      $msg = "Update failed (prepare): ".mysqli_error($conn);
+    } else {
+      mysqli_stmt_bind_param($stmt,"sssi",$name,$category,$details,$id);
+      if (mysqli_stmt_execute($stmt)) {
+        $msg = "Updated skill #$id";
+      } else {
+        $msg = "Update failed: ".htmlspecialchars(mysqli_stmt_error($stmt));
+      }
+      mysqli_stmt_close($stmt);
+    }
+  } else {
+    $msg = "Missing required fields for update.";
+  }
+}
+
+/* DELETE */
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['delete'])) {
+  $id = (int)($_POST['skill_id'] ?? 0);
+  $stmt = mysqli_prepare($conn, "DELETE FROM skills WHERE skill_id=?");
+  if (!$stmt) {
+    $msg = "Delete failed (prepare): ".mysqli_error($conn);
+  } else {
+    mysqli_stmt_bind_param($stmt,"i",$id);
+    if (mysqli_stmt_execute($stmt)) {
+      $msg = "Deleted skill #$id";
+    } else {
+      $msg = "Delete failed: ".htmlspecialchars(mysqli_stmt_error($stmt));
+    }
+    mysqli_stmt_close($stmt);
+  }
+}
+?>
+
+<?php if ($msg): ?><div class="msg"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
+
+<!-- Add skill card -->
+<section class="card" style="margin-bottom:16px">
+  <h2 style="margin:0 0 10px">Add Skill</h2>
+  <form method="post" class="bar">
+    <input type="hidden" name="add" value="1">
+    <input name="category" placeholder="Category (e.g., Academic, Tech Support)" required style="min-width:220px">
+    <input name="name" placeholder="Skill (e.g., COMP2030 Tutoring)" required style="min-width:260px">
+    <input name="details" placeholder="<?= $detailsCol==='topics' ? 'Topics (comma-separated)' : 'Description' ?>" style="min-width:260px">
+    <button type="submit" class="btn">Add Skill</button>
+  </form>
+</section>
+
+<!-- Skills table card -->
+<section class="card">
+  <div class="table-wrap">
+    <table class="zebra compact">
+      <thead>
+        <tr>
+          <th style="width:70px">ID</th>
+          <th style="width:220px">Category</th>
+          <th style="width:260px">Skill</th>
+          <th><?= $detailsCol==='topics' ? 'Topics' : 'Description' ?></th>
+          <th style="width:220px">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+<?php
+$res = mysqli_query($conn, "SELECT skill_id, category, name, $detailsCol AS details FROM skills ORDER BY category, name");
+
+if (!$res) {
+  echo '<tr><td colspan="5" class="empty">Query failed: '.htmlspecialchars(mysqli_error($conn)).'</td></tr>';
+} elseif (mysqli_num_rows($res) === 0) {
+  echo '<tr><td colspan="5" class="empty">No skills yet. Use the form above to add one.</td></tr>';
+} else {
+  while ($r = mysqli_fetch_assoc($res)) { ?>
+        <tr>
+          <td><?= (int)$r['skill_id'] ?></td>
+          <td>
+            <form method="post" class="inline-form">
+              <input type="hidden" name="skill_id" value="<?= (int)$r['skill_id'] ?>">
+              <input name="category" value="<?= htmlspecialchars($r['category'] ?? '') ?>" class="in-cell">
+          </td>
+          <td><input name="name" value="<?= htmlspecialchars($r['name'] ?? '') ?>" class="in-cell wide"></td>
+          <td><input name="details" value="<?= htmlspecialchars($r['details'] ?? '') ?>" class="in-cell wide"></td>
+          <td class="actions">
+            <button name="update" value="1" class="btn sm">Save</button>
+            </form>
+
+            <form method="post" onsubmit="return confirm('Delete this skill?');" class="inline-form">
+              <input type="hidden" name="skill_id" value="<?= (int)$r['skill_id'] ?>">
+              <button name="delete" value="1" class="btn sm danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+<?php } } ?>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

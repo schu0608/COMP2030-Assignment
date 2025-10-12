@@ -10,7 +10,6 @@ CREATE TABLE students (
     college VARCHAR(100),
     academic_year INT,
     bio TEXT,
-    profile_picture VARCHAR(200),
     fuss_credits DECIMAL(6,2) DEFAULT 0
 );
 
