@@ -15,7 +15,7 @@ $rows = get_transaction_history($uid,100);
 <head><link rel="stylesheet" href="/assets/style.css"></head>
 <body>
 <h1>Transaction History</h1>
-<p><strong>Current FUSSCredit Balance:</strong> <?= number_format($bal,2) ?></p>
+
 <p><a href="/profile.php">Back</a></p>
 <table border="1" cellpadding="6" cellspacing="0">
   <tr><th>#</th><th>Role</th><th>Hours</th><th>FUSSCredits (±)</th><th>Status</th></tr>
