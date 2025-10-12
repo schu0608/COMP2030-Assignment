@@ -13,17 +13,23 @@ $user = $st->fetch();
 
 $balance = get_fuss_balance($uid);
 ?>
-<!doctype html><html><head><meta charset="utf-8"><title>Dashboard</title></head><body>
+<!doctype html><html>
+  <head>
+  <meta charset="utf-8"><title>Dashboard</title>
+    <link rel="stylesheet" href="/COMP2030-ASSIGNMENT/src/css/style.css?v=8">
+ </head>
+<body>
 <h1>Welcome, <?=htmlspecialchars($user['full_name'] ?? 'Student')?></h1>
+<?php if (!empty($user['profile_picture'])): ?>
+  <img src="/COMP2030-Assignment/src/StudentPage/Public/uploads/<?=htmlspecialchars($user['profile_picture'])?>" alt="Profile" style="max-width:150px">
+<?php endif; ?>
 <p><strong>FUSSCredit Balance:</strong> <?= number_format($balance,2) ?></p>
 <p>
-  <a href="/profile_edit.php">Edit Profile</a> |
-  <a href="/skills_manage.php">Manage Skills</a> |
-  <a href="/transactions.php">Transactions</a> |
-  <a href="/logout.php">Logout</a>
+  <a href="/COMP2030-Assignment/src/StudentPage/Public/profile_edit.php">Edit Profile</a> |
+  <a href="/COMP2030-Assignment/src/StudentPage/Public/skills_manage.php">Manage Skills</a> |
+  <a href="/COMP2030-Assignment/src/StudentPage/Public/transactions.php">Transactions</a> |
+  <a href="/COMP2030-Assignment/src/StudentPage/Public/logout.php">Logout</a>
 </p>
-<?php if (!empty($user['profile_picture'])): ?>
-  <img src="/uploads/<?=htmlspecialchars($user['profile_picture'])?>" alt="Profile" style="max-width:150px">
-<?php endif; ?>
+
 <p><?= nl2br(htmlspecialchars($user['bio'] ?? '')) ?></p>
 </body></html>

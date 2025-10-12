@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   $degree = sanitize($_POST['degree'] ?? '', 100);
   $college= sanitize($_POST['college'] ?? '', 100);
   $year   = (int)($_POST['academic_year'] ?? 1);
-
+  
   if (!is_valid_flinders_email($email)) $errors[]='Use your @flinders.edu.au email';
   if (strlen($pass) < 8) $errors[]='Password must be at least 8 characters';
   if ($name === '') $errors[]='Full name is required';
@@ -36,10 +36,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   }
 }
 ?>
-<!doctype html><html><head><meta charset="utf-8"><title>Register</title></head><body>
+<!doctype html><html><head><meta charset="utf-8"><title>Register</title>
+<link rel="stylesheet" href="/COMP2030-ASSIGNMENT/src/css/style.css?v=8"></head><body>
 <h1>Register</h1>
 <?php if ($ok): ?>
-  <p>Success. <a href="/login.php">Login</a></p>
+  <p>Success. <a href="/COMP2030-Assignment/src/StudentPage/Public/login.php">Login</a></p>
 <?php else: ?>
   <?php foreach ($errors as $e) echo "<p style='color:red'>".htmlspecialchars($e)."</p>"; ?>
   <form method="post">
@@ -52,6 +53,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     <label>Academic Year <input type="number" name="academic_year" min="1" max="8" value="1"></label><br>
     <button>Register</button>
   </form>
-  <p>Have an account? <a href="/login.php">Login</a></p>
+  <p>Have an account? <a href="/COMP2030-Assignment/src/StudentPage/Public/login.php">Login</a></p>
 <?php endif; ?>
 </body></html>
