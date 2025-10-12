@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/csrf.php';
-require_once __DIR__ . '/../includes/validation.php';
+require_once __DIR__ . '/../inc/auth.php';
+require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/csrf.php';
+require_once __DIR__ . '/../inc/validation.php';
 
 require_login();
 $uid = current_user_id(); $msg=null;
@@ -32,7 +32,7 @@ $st->execute([$uid]);
 $user=$st->fetch();
 ?>
 <!doctype html><html><head><meta charset="utf-8"><title>Edit Profile</title>
-<link rel="stylesheet" href="/COMP2030-ASSIGNMENT/src/css/style.css?v=8"></head><body>
+</head><body>
 <h1>Edit Profile</h1>
 <?php if($msg) echo "<p style='color:green'>".htmlspecialchars($msg)."</p>"; ?>
 <form method="post" enctype="multipart/form-data">
@@ -46,5 +46,5 @@ $user=$st->fetch();
   <label>Profile Picture <input type="file" name="profile_picture" accept="image/*"></label><br>
   <button>Save</button>
 </form>
-<p><a href="/COMP2030-Assignment/src/StudentPage/Public/index.php">Back</a></p>
+<p><a href="/index.php">Back</a></p>
 </body></html>

@@ -13,7 +13,7 @@ function session_boot(): void {
 function current_user_id(): ?int { session_boot(); return $_SESSION['uid'] ?? null; }
 
 function require_login(): void {
-  if (!current_user_id()) { header('Location: /COMP2030-Assignment/src/StudentPage/Public/login.php'); exit; }
+  if (!current_user_id()) { header('Location: /login.php'); exit; }
 }
 
 function login_user(string $email, string $password): bool {
