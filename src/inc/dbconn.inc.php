@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 $host = getenv('MYSQL_HOST') ?: 'db';
 $port = getenv('MYSQL_PORT') ?: '3306';
-$db = 'fussdb';
+$db = 'web_dev_db';
 $user = getenv('MYSQL_USER') ?: 'root';
 $pass = getenv('MYSQL_PASSWORD') ?: '';
 
