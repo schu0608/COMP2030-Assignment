@@ -27,13 +27,12 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 }
 $skills = get_student_skills($uid,$role);
 ?>
-<!doctype html><html><head><meta charset="utf-8"><title>Skills</title>
-<link rel="stylesheet" href="/COMP2030-ASSIGNMENT/src/css/style.css?v=8"></head><body>
+<!doctype html><html><head><meta charset="utf-8"><title>Skills</title></head><body>
 <h1>Skills (<?=htmlspecialchars($role)?>)</h1>
 <p>
-  <a href="/COMP2030-Assignment/src/StudentPage/Public/skills_manage.php?role=offered">Offered</a> |
-  <a href="/COMP2030-Assignment/src/StudentPage/Public/skills_manage.php?role=requested">Requested</a> |
-  <a href="/COMP2030-Assignment/src/StudentPage/Public/index.php">Back</a>
+  <a href="/skills_manage.php?role=offered">Offered</a> |
+  <a href="/skills_manage.php?role=requested">Requested</a> |
+  <a href="/index.php">Back</a>
 </p>
 <?php if($msg) echo "<p style='color:green'>".htmlspecialchars($msg)."</p>"; ?>
 

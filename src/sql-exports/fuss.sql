@@ -1,7 +1,7 @@
 -- Create DB (idempotent) and set sane defaults
 CREATE DATABASE IF NOT EXISTS fussdb
   DEFAULT CHARACTER SET utf8mb4
-  DEFAULT COLLATE utf8mb4_general_ci;
+  DEFAULT COLLATE utf8mb4_0900_ai_ci;
 
 USE fussdb;
 

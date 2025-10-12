@@ -7,11 +7,10 @@ require_login(); $uid=current_user_id();
 $bal = get_fuss_balance($uid);
 $rows = get_transaction_history($uid,100);
 ?>
-<!doctype html><html><head><meta charset="utf-8"><title>Transactions</title>
-<link rel="stylesheet" href="/COMP2030-ASSIGNMENT/src/css/style.css?v=8"></head><body>
+<!doctype html><html><head><meta charset="utf-8"><title>Transactions</title></head><body>
 <h1>Transaction History</h1>
 <p><strong>Current FUSSCredit Balance:</strong> <?= number_format($bal,2) ?></p>
-<p><a href="/COMP2030-Assignment/src/StudentPage/Public/index.php">Back</a></p>
+<p><a href="/index.php">Back</a></p>
 <table border="1" cellpadding="6" cellspacing="0">
   <tr><th>#</th><th>Role</th><th>Hours</th><th>FUSSCredits (±)</th><th>Status</th></tr>
   <?php foreach ($rows as $r):
