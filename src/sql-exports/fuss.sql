@@ -143,3 +143,52 @@ SELECT
   COUNT(*)    AS rating_count
 FROM reviews
 GROUP BY reviewee_id;
+
+-- People-to-people conversations (one row per pair)
+CREATE TABLE IF NOT EXISTS conversations (
+  conversation_id INT AUTO_INCREMENT PRIMARY KEY,
+  a_id INT NOT NULL,             -- smaller user id
+  b_id INT NOT NULL,             -- larger user id
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_pair (a_id, b_id),
+  INDEX idx_updated (updated_at),
+  FOREIGN KEY (a_id) REFERENCES students(student_id),
+  FOREIGN KEY (b_id) REFERENCES students(student_id)
+);
+
+-- Messages (read tracking via read_at)
+CREATE TABLE IF NOT EXISTS pm_messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  conversation_id INT NOT NULL,
+  sender_id INT NOT NULL,
+  body VARCHAR(2000) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  read_at TIMESTAMP NULL DEFAULT NULL,
+  INDEX ix_conv_time (conversation_id, created_at),
+  INDEX ix_conv_read (conversation_id, read_at),
+  CONSTRAINT fk_msg_conv FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id),
+  CONSTRAINT fk_msg_sender FOREIGN KEY (sender_id) REFERENCES students(student_id)
+);
+
+CREATE TABLE IF NOT EXISTS message_reads (
+  user_id         INT NOT NULL,
+  transaction_id  INT NOT NULL,
+  last_seen_at    DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
+  PRIMARY KEY (user_id, transaction_id),
+  FOREIGN KEY (user_id)        REFERENCES students(student_id),
+  FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id)
+);
+
+-- Conversations (store user pair as (min, max) to avoid duplicates)
+CREATE TABLE IF NOT EXISTS conversations (
+  conversation_id INT AUTO_INCREMENT PRIMARY KEY,
+  a_id INT NOT NULL,
+  b_id INT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX ix_a (a_id), INDEX ix_b (b_id),
+  CONSTRAINT fk_conv_a FOREIGN KEY (a_id) REFERENCES students(student_id),
+  CONSTRAINT fk_conv_b FOREIGN KEY (b_id) REFERENCES students(student_id),
+  UNIQUE KEY uniq_pair (a_id, b_id)  -- app guarantees a_id<b_id
+);

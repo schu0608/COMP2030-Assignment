@@ -1,99 +1,97 @@
 <?php
-$root = dirname(__DIR__, 2);
-require_once $root . '/inc/init.inc.php';
+// actions/service_confirm.php
+require_once dirname(__DIR__, 2) . '/inc/init.inc.php';
 
 $uid = require_login();
 validate_csrf();
 
-$tid   = (int)($_POST['transaction_id'] ?? 0);
-$override = isset($_POST['hours_override']) ? (float)$_POST['hours_override'] : null;
-
-if ($tid <= 0) redirect('/messages.php?e=invalid');
+$tx_id = (int)($_POST['tx_id'] ?? $_POST['request_id'] ?? $_POST['req_id'] ?? 0);
+$hours = isset($_POST['hours']) ? (float)$_POST['hours'] : 0.0;
+if ($tx_id <= 0) redirect('/messages.php?e=tx');
 
 $pdo = db();
 $pdo->beginTransaction();
 
-// Lock the row
-$st = $pdo->prepare('SELECT * FROM transactions WHERE transaction_id=? FOR UPDATE');
-$st->execute([$tid]);
-$t = $st->fetch();
-if (!$t) { $pdo->rollBack(); redirect('/messages.php?e=notfound'); }
+try {
+  // Lock the transaction row
+  $st = $pdo->prepare('SELECT * FROM transactions WHERE transaction_id=? FOR UPDATE');
+  $st->execute([$tx_id]);
+  $tx = $st->fetch();
+  if (!$tx) { $pdo->rollBack(); redirect('/messages.php?e=tx404'); }
 
-$rid = (int)$t['requester_id'];
-$pid = (int)$t['provider_id'];
+  $rid = (int)$tx['requester_id'];
+  $pid = (int)$tx['provider_id'];
+  $youAreRequester = ($uid === $rid);
+  $youAreProvider  = ($uid === $pid);
+  if (!$youAreRequester && !$youAreProvider) { $pdo->rollBack(); redirect('/messages.php?e=auth'); }
 
-if ($uid !== $rid && $uid !== $pid) {
-  $pdo->rollBack(); http_response_code(403); exit('Forbidden');
-}
+  // Coerce hours for finalisation path
+  $agreedHours = $hours > 0 ? $hours : (float)($tx['proposed_hours'] ?? $tx['hours'] ?? 0);
+  if ($agreedHours <= 0) $agreedHours = (float)($tx['hours'] ?? 1.0);
 
-$status = (string)$t['status'];
-$terminal = ['confirmed','rejected'];
-if (in_array($status, $terminal, true)) {
-  $pdo->rollBack(); redirect('/thread.php?id='.$tid.'&e=locked');
-}
+  // Work out new status
+  $status = $tx['status'];
+  $finalising = false;
 
-// Decide final hours (override > proposed > original)
-$final = $override !== null && $override > 0 ? $override :
-         ($t['proposed_hours'] !== null ? (float)$t['proposed_hours'] : (float)$t['hours']);
-$final = max(0.5, $final); // basic floor
-
-// Who is confirming now?
-if ($uid === $rid) {
-  if ($status === 'confirm_provider') {
-    // both sides have now confirmed => transfer + close
-    // check balance
-    $balq = $pdo->prepare('SELECT fuss_credits FROM students WHERE student_id=? FOR UPDATE');
-    $balq->execute([$rid]); $bal = (float)$balq->fetchColumn();
-    if ($bal < $final) { $pdo->rollBack(); redirect('/thread.php?id='.$tid.'&e=credits'); }
-
-    // transfer
-    $pdo->prepare('UPDATE students SET fuss_credits = fuss_credits - ? WHERE student_id=?')
-        ->execute([$final, $rid]);
-    $pdo->prepare('UPDATE students SET fuss_credits = fuss_credits + ? WHERE student_id=?')
-        ->execute([$final, $pid]);
-
-    // close transaction
-    $pdo->prepare('UPDATE transactions SET status="confirmed", fuss_credit_amount=?, proposed_hours=NULL WHERE transaction_id=?')
-        ->execute([$final, $tid]);
-
-    // system message
-    $pdo->prepare('INSERT INTO messages (transaction_id, sender_id, body, type) VALUES (?,?,?,?)')
-        ->execute([$tid, $uid, 'Requester confirmed. Service completed. '.$final.' credits transferred.', 'system']);
-
-  } else {
-    // first confirmer (requester)
-    $pdo->prepare('UPDATE transactions SET status="confirm_requester", proposed_hours=? WHERE transaction_id=?')
-        ->execute([$final, $tid]);
-
-    $pdo->prepare('INSERT INTO messages (transaction_id, sender_id, body, type) VALUES (?,?,?,?)')
-        ->execute([$tid, $uid, 'Requester confirmed hours: '.number_format($final,2), 'system']);
+  if ($youAreRequester) {
+    if ($status === 'confirm_provider') { $finalising = true; }
+    $status = 'confirm_requester';
+  } else { // provider
+    if ($status === 'confirm_requester') { $finalising = true; }
+    $status = 'confirm_provider';
   }
-} else { // provider confirms
-  if ($status === 'confirm_requester') {
-    // both sides have now confirmed => transfer + close
+
+  // If we are finalising -> move credits and mark confirmed
+  if ($finalising) {
+    // Check balance of requester
     $balq = $pdo->prepare('SELECT fuss_credits FROM students WHERE student_id=? FOR UPDATE');
-    $balq->execute([$rid]); $bal = (float)$balq->fetchColumn();
-    if ($bal < $final) { $pdo->rollBack(); redirect('/thread.php?id='.$tid.'&e=credits'); }
+    $balq->execute([$rid]);
+    $bal = (float)$balq->fetchColumn();
 
+    if ($bal < $agreedHours) {
+      // Not enough credits
+      $pdo->rollBack();
+      redirect('/thread.php?id=' . $tx_id . '&e=credits');
+    }
+
+    // Move credits
     $pdo->prepare('UPDATE students SET fuss_credits = fuss_credits - ? WHERE student_id=?')
-        ->execute([$final, $rid]);
+        ->execute([$agreedHours, $rid]);
     $pdo->prepare('UPDATE students SET fuss_credits = fuss_credits + ? WHERE student_id=?')
-        ->execute([$final, $pid]);
+        ->execute([$agreedHours, $pid]);
 
-    $pdo->prepare('UPDATE transactions SET status="confirmed", fuss_credit_amount=?, proposed_hours=NULL WHERE transaction_id=?')
-        ->execute([$final, $tid]);
+    // Mark confirmed and set monetary values
+    $pdo->prepare(
+      'UPDATE transactions
+         SET hours=?, fuss_credit_amount=?, status="confirmed"
+       WHERE transaction_id=?'
+    )->execute([$agreedHours, $agreedHours, $tx_id]);
 
-    $pdo->prepare('INSERT INTO messages (transaction_id, sender_id, body, type) VALUES (?,?,?,?)')
-        ->execute([$tid, $uid, 'Provider confirmed. Service completed. '.$final.' credits transferred.', 'system']);
-  } else {
-    // first confirmer (provider)
-    $pdo->prepare('UPDATE transactions SET status="confirm_provider", proposed_hours=? WHERE transaction_id=?')
-        ->execute([$final, $tid]);
+    // System note
+    $pdo->prepare('INSERT INTO messages (transaction_id, sender_id, body, type)
+                   VALUES (?,?,?, "system")')
+        ->execute([$tx_id, $uid, 'Service completed and credits transferred.']);
 
-    $pdo->prepare('INSERT INTO messages (transaction_id, sender_id, body, type) VALUES (?,?,?,?)')
-        ->execute([$tid, $uid, 'Provider confirmed hours: '.number_format($final,2), 'system']);
+    $pdo->commit();
+    // Send them back with a review prompt
+    redirect('/thread.php?id=' . $tx_id . '&review=1');
   }
-}
 
-$pdo->commit();
-redirect('/thread.php?id='.$tid);
+  // Single-sided confirmation path (not final yet)
+  $pdo->prepare('UPDATE transactions SET status=? WHERE transaction_id=?')
+      ->execute([$status, $tx_id]);
+
+  $pdo->prepare('INSERT INTO messages (transaction_id, sender_id, body, type)
+                 VALUES (?,?,?, "system")')
+      ->execute([$tx_id, $uid, $youAreRequester
+        ? 'Requester confirmed completion.'
+        : 'Provider confirmed completion.']);
+
+  $pdo->commit();
+  redirect('/thread.php?id=' . $tx_id);
+
+} catch (Throwable $e) {
+  if ($pdo->inTransaction()) $pdo->rollBack();
+  // Optional: log error
+  redirect('/thread.php?id=' . $tx_id . '&e=server');
+}

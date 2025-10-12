@@ -50,3 +50,34 @@ if (!function_exists('is_admin')) {
     }
   }
 }
+// --- Messaging helpers ---
+
+/**
+ * Mark a thread as "seen now" by user.
+ */
+function mark_thread_seen(int $userId, int $txId): void {
+  $pdo = db();
+  $sql = "INSERT INTO message_reads (user_id, transaction_id, last_seen_at)
+          VALUES (?, ?, NOW())
+          ON DUPLICATE KEY UPDATE last_seen_at = GREATEST(last_seen_at, NOW())";
+  $pdo->prepare($sql)->execute([$userId, $txId]);
+}
+
+/**
+ * Number of threads with messages newer than the user's last_seen.
+ * We count DISTINCT threads where someone-else posted after last_seen.
+ */
+function unread_thread_count(int $userId): int {
+  $pdo = db();
+  $sql = "SELECT COUNT(DISTINCT m.transaction_id) AS c
+            FROM transactions t
+            JOIN messages m ON m.transaction_id = t.transaction_id
+       LEFT JOIN message_reads r
+              ON r.transaction_id = m.transaction_id AND r.user_id = ?
+           WHERE (t.requester_id = ? OR t.provider_id = ?)
+             AND m.sender_id <> ?
+             AND m.created_at > COALESCE(r.last_seen_at, '1970-01-01')";
+  $st = $pdo->prepare($sql);
+  $st->execute([$userId, $userId, $userId, $userId]);
+  return (int) $st->fetchColumn();
+}

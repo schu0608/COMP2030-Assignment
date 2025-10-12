@@ -327,3 +327,71 @@ a:focus-visible{
   text-underline-offset: 2px;
 }
 .btn-link:hover{ color: var(--link-hover); }
+
+/* ===== Buttons: high-contrast primary ===== */
+a.btn, button.btn { color: var(--text); }
+
+/* Light & dark defaults: make primary buttons dark with white text */
+.btn--primary,
+.btn--primary:link,
+.btn--primary:visited {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* Hover + focus for accessibility */
+.btn--primary:hover {
+  background: color-mix(in srgb, var(--primary) 85%, #ffffff 15%);
+  text-decoration: none;
+}
+.btn--primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* Dark mode: nudge to vivid blue for extra contrast */
+@media (prefers-color-scheme: dark) {
+  .btn--primary,
+  .btn--primary:link,
+  .btn--primary:visited {
+    background: #2563eb;      /* blue-600 */
+    border-color: #2563eb;
+    color: #ffffff;
+  }
+  .btn--primary:hover { background: #1d4ed8; } /* blue-700 */
+}
+
+/* --- Unread badge on nav --- */
+.tabs a { position: relative; }
+
+.badge {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  background: var(--accent);    /* gold in light / themed; in dark use vivid */
+  color: #0b1220;               /* dark text on bright badge */
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, #000 30%);
+  box-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+
+.badge--nav {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge {
+    background: #fbbf24;       /* amber-400 for better contrast on dark */
+    border-color: #d97706;
+    color: #111827;            /* slate-900 */
+  }
+}
