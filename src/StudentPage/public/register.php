@@ -1,8 +1,18 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/validation.php';
-require_once __DIR__ . '/../includes/csrf.php';
+
+$sessionPath = '/workspaces/' . basename(getcwd()) . '/.sessions';
+if (!is_dir($sessionPath)) {
+    mkdir($sessionPath, 0777, true);
+}
+ini_set('session.save_path', $sessionPath);
+ini_set('session.cookie_secure', '0'); // internal server is HTTP inside container
+ini_set('session.cookie_samesite', 'Lax');
+
+
+require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/validation.php';
+require_once __DIR__ . '/../inc/csrf.php';
 
 $ok=false; $errors=[];
 
@@ -37,10 +47,10 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 }
 ?>
 <!doctype html><html><head><meta charset="utf-8"><title>Register</title>
-<link rel="stylesheet" href="/COMP2030-ASSIGNMENT/src/css/style.css?v=8"></head><body>
+</head><body>
 <h1>Register</h1>
 <?php if ($ok): ?>
-  <p>Success. <a href="/COMP2030-Assignment/src/StudentPage/Public/login.php">Login</a></p>
+  <p>Success. <a href="/login.php">Login</a></p>
 <?php else: ?>
   <?php foreach ($errors as $e) echo "<p style='color:red'>".htmlspecialchars($e)."</p>"; ?>
   <form method="post">
@@ -53,6 +63,6 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     <label>Academic Year <input type="number" name="academic_year" min="1" max="8" value="1"></label><br>
     <button>Register</button>
   </form>
-  <p>Have an account? <a href="/COMP2030-Assignment/src/StudentPage/Public/login.php">Login</a></p>
+  <p>Have an account? <a href="/login.php">Login</a></p>
 <?php endif; ?>
 </body></html>
