@@ -216,3 +216,114 @@ section + h2{margin-top:var(--s-6)}
 
 /* Nav tab focus ring boost */
 .tabs a:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring)}
+
+/* --- Fix: don't style checkboxes like text inputs --- */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+/* Reset + accessible styling for checkbox/radio */
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  accent-color: var(--accent);   /* brand colour for the tick */
+}
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Compact “flag” chip used in messages filter */
+.flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--muted-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+}
+.flag:focus-within { box-shadow: 0 0 0 3px var(--ring); }
+.flag input { width: 1.1rem; height: 1.1rem; }
+
+/* Dark-mode contrast boost */
+@media (prefers-color-scheme: dark) {
+  .flag {
+    background: #1a2438;      /* slightly lighter than page bg */
+    border-color: #334155;    /* slate-600 */
+  }
+  input[type="checkbox"],
+  input[type="radio"] { accent-color: #f5b400; } /* gold tick in dark mode */
+}
+/* ===== Accessible link colors ===== */
+
+/* 1) Link tokens */
+:root{
+  --link:        var(--primary);   /* light theme base */
+  --link-hover:  var(--accent-600);
+}
+
+/* Dark-mode: use bright gold for strong contrast on slate bg */
+@media (prefers-color-scheme: dark){
+  :root{
+    --link:       #f5b400;         /* Flinders gold */
+    --link-hover: #ffd24a;         /* lighter on hover */
+  }
+}
+
+/* 2) Base link styling */
+a{
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 2px;
+}
+a:hover{
+  color: var(--link-hover);
+  text-decoration-thickness: 3px;
+}
+a:visited{ color: var(--link); }        /* keep contrast, no dimming */
+a:focus-visible{
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;                   /* nicer focus ring corner */
+}
+
+/* 3) Links inside subtle surfaces (e.g., .notice) */
+.notice a{
+  color: var(--link);
+  font-weight: 600;
+}
+.notice a:hover{
+  color: var(--link-hover);
+}
+
+/* 4) Optional: button-like text links */
+.btn-link{
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--link);
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.btn-link:hover{ color: var(--link-hover); }

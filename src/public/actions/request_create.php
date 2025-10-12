@@ -1,65 +1,89 @@
 <?php
-require_once dirname(__DIR__,2).'/inc/init.inc.php';
+// actions/request_create.php
+require_once dirname(__DIR__) . '/inc/init.inc.php';
 
 $uid = require_login();
-validate_csrf();
+if (function_exists('validate_csrf')) { validate_csrf(); }
 
-$offer_id = (int)($_POST['offer_id'] ?? 0);
-$hours    = (float)($_POST['hours'] ?? 0);
+$pdo        = db();
+$providerId = (int)($_POST['provider_id'] ?? 0);
+$skillId    = (int)($_POST['skill_id'] ?? 0);
+$offerId    = (int)($_POST['offer_id'] ?? 0); // optional, when you link to student_skills.id
+$hours      = (float)($_POST['hours'] ?? 0);
+$msgBody    = trim((string)($_POST['message'] ?? ''));
 
-if ($offer_id <= 0 || $hours <= 0) {
-  redirect('/browse.php?e=params');
+if ($providerId <= 0 || $skillId <= 0 || $hours <= 0) {
+  redirect('/browse.php?e=bad_input');
+}
+if ($providerId === $uid) {
+  redirect('/browse.php?e=self');
 }
 
-/**
- * Fetch the authoritative provider + skill from the offer row.
- * This removes reliance on hidden fields and avoids mismatches.
- */
-$off = db()->prepare(
-  'SELECT ss.id AS offer_id,
-          ss.student_id AS provider_id,
-          ss.skill_id
-     FROM student_skills ss
-    WHERE ss.id = ? AND ss.role = "offered"'
-);
-$off->execute([$offer_id]);
-$offer = $off->fetch();
+// 1 credit == 1 hour
+$creditNeeded = $hours;
 
-if (!$offer) {
-  redirect('/browse.php?e=offer_nf');
+// Ensure provider + skill is actually an offered skill (avoid spoofing)
+try {
+  if ($offerId > 0) {
+    $st = $pdo->prepare('SELECT 1 FROM student_skills WHERE id=? AND student_id=? AND skill_id=? AND role="offered"');
+    $st->execute([$offerId, $providerId, $skillId]);
+  } else {
+    $st = $pdo->prepare('SELECT 1 FROM student_skills WHERE student_id=? AND skill_id=? AND role="offered"');
+    $st->execute([$providerId, $skillId]);
+  }
+  if (!$st->fetchColumn()) {
+    redirect('/browse.php?e=no_offer');
+  }
+} catch (Throwable $e) {
+  redirect('/browse.php?e=server');
 }
 
-$provider_id = (int)$offer['provider_id'];
-$skill_id    = (int)$offer['skill_id'];
-
-if ($provider_id === $uid) {
-  redirect('/skill.php?id='.$offer_id.'&e=self');
+// Balance check (no negatives for requester)
+$balance = (float)($pdo->query('SELECT fuss_credits FROM students WHERE student_id='.(int)$uid)->fetchColumn() ?? 0);
+if ($balance < $creditNeeded) {
+  redirect('/browse.php?e=credits');
 }
 
-// Balance guard at request time (we’ll recheck on transfer)
-$bal = (float) db()->query('SELECT fuss_credits FROM students WHERE student_id='.$uid)->fetchColumn();
-if ($bal < $hours) {
-  redirect('/skill.php?id='.$offer_id.'&e=credits');
+// Prevent duplicate open transaction between same trio (basic)
+$openStatuses = ['pending','accepted','proposed','confirm_requester','confirm_provider'];
+$ph = implode(',', array_fill(0, count($openStatuses), '?'));
+$params = array_merge([$uid, $providerId, $skillId], $openStatuses);
+
+$dup = $pdo->prepare("SELECT transaction_id FROM transactions
+                      WHERE requester_id=? AND provider_id=? AND skill_id=? AND status IN ($ph)
+                      ORDER BY transaction_id DESC LIMIT 1");
+$dup->execute($params);
+if ($dup->fetchColumn()) {
+  // already an open request; go to requests page
+  redirect('/messages.php?info=exists');
 }
 
-// Create the transaction
-$pdo = db();
+// Create request
 $pdo->beginTransaction();
+try {
+  $ins = $pdo->prepare('INSERT INTO transactions
+    (requester_id, provider_id, skill_id, hours, fuss_credit_amount, status)
+    VALUES (?, ?, ?, ?, ?, "pending")');
+  $ins->execute([$uid, $providerId, $skillId, $hours, $creditNeeded]);
+  $tid = (int)$pdo->lastInsertId();
 
-$ins = $pdo->prepare(
-  'INSERT INTO transactions
-     (requester_id, provider_id, skill_id, hours, fuss_credit_amount, status)
-   VALUES (?,?,?,?,?, "pending")'
-);
-$ins->execute([$uid, $provider_id, $skill_id, $hours, $hours]);
+  // initial message (optional)
+  if ($msgBody !== '') {
+    $m = $pdo->prepare('INSERT INTO messages (transaction_id, sender_id, body, type)
+                        VALUES (?, ?, ?, "text")');
+    $m->execute([$tid, $uid, $msgBody]);
+  } else {
+    $m = $pdo->prepare('INSERT INTO messages (transaction_id, sender_id, body, type)
+                        VALUES (?, ?, ?, "system")');
+    $m->execute([$tid, $uid, "Request created for {$hours}h"]);
+  }
 
-$tid = (int)$pdo->lastInsertId();
+  $pdo->commit();
 
-// Optional: first system message so there’s always something in the thread
-$pdo->prepare('INSERT INTO messages (transaction_id, sender_id, body, type)
-               VALUES (?,?,?, "system")')
-    ->execute([$tid, $uid, 'New request created.']);
-
-$pdo->commit();
-
-redirect('/thread.php?id='.$tid);
+  // success → Requests page (or your thread page if you have one)
+  redirect('/messages.php?created=1');
+} catch (Throwable $e) {
+  $pdo->rollBack();
+  // fall back to browse with error; inspect server log for details
+  redirect('/browse.php?e=save');
+}

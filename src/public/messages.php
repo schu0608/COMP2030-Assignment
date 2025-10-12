@@ -1,130 +1,146 @@
 <?php
-require_once __DIR__ . '/../inc/init.inc.php';
+require_once dirname(__DIR__) . '/inc/init.inc.php';
+$uid = require_login();
+$pageTitle = 'Requests';
 
-$uid = require_login();           // must be logged in
-$pageTitle = 'Requests';          // shows on the right in the header
-include __DIR__ . '/../templates/header.php';
+$incomingOnly = isset($_GET['incoming']) ? 1 : 0;
+$pdo = db();
 
-/** Incoming-only toggle (requests where I am the provider) */
-$incomingOnly = isset($_GET['incoming']) ? (int)$_GET['incoming'] : 0;
-
-/** Fetch requests that involve the current user */
 $sql = "
   SELECT
-    sr.id                         AS req_id,
-    sr.status,
-    sr.requester_id,
-    sr.provider_id,
-    sr.requested_hours,
-    sr.proposed_hours,
-    COALESCE(sr.updated_at, sr.created_at) AS created_at,
-    s.name                        AS skill_name,
-    s.category                    AS category,
-    CASE WHEN sr.requester_id = :uid THEN sr.provider_id ELSE sr.requester_id END AS other_id
-  FROM service_requests sr
-  JOIN skills s ON s.skill_id = sr.skill_id
-  WHERE (sr.requester_id = :uid OR sr.provider_id = :uid)
-    " . ($incomingOnly ? "AND sr.provider_id = :uid" : "") . "
-  ORDER BY sr.id DESC
+    t.transaction_id, t.requester_id, t.provider_id, t.skill_id,
+    t.hours, t.proposed_hours, t.fuss_credit_amount, t.status,
+    s.name AS skill_name,
+    rq.full_name AS requester_name,
+    pr.full_name AS provider_name
+  FROM transactions t
+  JOIN skills   s  ON s.skill_id = t.skill_id
+  JOIN students rq ON rq.student_id = t.requester_id
+  JOIN students pr ON pr.student_id = t.provider_id
+  WHERE (t.requester_id = :me OR t.provider_id = :me)
 ";
-$stmt = db()->prepare($sql);
-$stmt->execute([':uid' => $uid]);
-$rows = $stmt->fetchAll();
+$params = [':me' => $uid];
+if ($incomingOnly) $sql .= " AND t.provider_id = :me";
+$sql .= " ORDER BY t.transaction_id DESC";
 
-/** Resolve counterpart names in one go */
-$otherIds = array_values(array_unique(array_map(fn($r) => (int)$r['other_id'], $rows)));
-$names = [];
-if ($otherIds) {
-  $in = implode(',', array_fill(0, count($otherIds), '?'));
-  $st = db()->prepare("SELECT student_id, full_name FROM students WHERE student_id IN ($in)");
-  $st->execute($otherIds);
-  foreach ($st->fetchAll() as $n) $names[(int)$n['student_id']] = $n['full_name'];
+$rows = $pdo->prepare($sql); $rows->execute($params); $rows = $rows->fetchAll();
+
+/* Buckets */
+$open = $needsMyConfirm = $completed = [];
+
+foreach ($rows as $r) {
+  $status = (string)$r['status'];
+  $mineIsRequester = ((int)$r['requester_id'] === $uid);
+  $waitingForMe =
+    ($mineIsRequester && $status === 'confirm_requester') ||
+    (!$mineIsRequester && $status === 'confirm_provider');
+
+  if ($status === 'confirmed') {
+    $completed[] = $r;
+  } elseif ($waitingForMe) {
+    $needsMyConfirm[] = $r;
+  } else {
+    $open[] = $r; // pending / accepted / proposed / confirm_* (waiting on them)
+  }
 }
 
-/** Helper: status → badge class + label */
-function map_status(string $status): array {
-  return match ($status) {
-    'pending'            => ['badge--pending',   'Pending'],
-    'accepted'           => ['badge--inprogress','In progress'],
-    'in_progress'        => ['badge--inprogress','In progress'],
-    'confirm_provider'   => ['badge--confirm',   'Awaiting provider'],
-    'confirm_requester'  => ['badge--confirm',   'Awaiting requester'],
-    'complete'           => ['badge--complete',  'Complete'],
-    'rejected'           => ['badge--rejected',  'Rejected'],
-    default              => ['badge',            ucfirst($status ?: 'Status')],
-  };
+include dirname(__DIR__).'/templates/header.php';
+?>
+
+<h1>Your requests</h1>
+
+<form method="get" class="bar" style="margin-bottom:12px">
+  <label class="flag">
+    <input type="checkbox" name="incoming" value="1" <?= $incomingOnly ? 'checked' : '' ?>>
+    <span class="flag-text">Show incoming only</span>
+  </label>
+  <button class="btn btn--sm">Apply</button>
+</form>
+
+<?php
+function who($r, $uid) {
+  return ((int)$r['requester_id'] === $uid) ? 'Outgoing' : 'Incoming';
 }
-
-/** Helper: action suggestion (text + URL) based on role & status */
-function next_action(array $r, int $uid): array {
-  $isProvider  = ((int)$r['provider_id']  === $uid);
-  $isRequester = ((int)$r['requester_id'] === $uid);
-  $id = (int)$r['req_id'];
-
-  return match ($r['status']) {
-    'pending'            => $isProvider  ? ['Review request', "/thread.php?id=$id"] : ['Open', "/thread.php?id=$id"],
-    'accepted','in_progress'
-                          => ['Open', "/thread.php?id=$id"],
-    'confirm_provider'   => $isProvider  ? ['Confirm hours', "/thread.php?id=$id#confirm"] : ['Open', "/thread.php?id=$id"],
-    'confirm_requester'  => $isRequester ? ['Confirm hours', "/thread.php?id=$id#confirm"] : ['Open', "/thread.php?id=$id"],
-    'complete'           => ['View', "/thread.php?id=$id"],
-    'rejected'           => ['View', "/thread.php?id=$id"],
-    default              => ['Open', "/thread.php?id=$id"],
-  };
+function otherName($r, $uid) {
+  return ((int)$r['requester_id'] === $uid) ? $r['provider_name'] : $r['requester_name'];
+}
+function agreed_hours($r) {
+  return isset($r['proposed_hours']) && $r['proposed_hours'] !== null && $r['proposed_hours'] !== ''
+    ? (float)$r['proposed_hours'] : (float)$r['hours'];
 }
 ?>
 
-<section class="container" style="margin-top:20px">
-  <h1>Your requests</h1>
+<?php if (!$open && !$needsMyConfirm && !$completed): ?>
+  <p class="notice">You don’t have any requests yet. Visit <a href="/browse.php">Browse skills</a> to get started.</p>
+<?php endif; ?>
 
-  <div class="filter-row">
-    <form method="get" style="display:flex;align-items:center;gap:10px;margin:0">
-      <label style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" class="switch" name="incoming" value="1" <?= $incomingOnly ? 'checked' : '' ?>>
-        Show incoming only
-      </label>
-      <button class="btn btn--sm">Apply</button>
-    </form>
+<?php if ($needsMyConfirm): ?>
+  <h2>Needs your confirmation</h2>
+  <div class="stack">
+    <?php foreach ($needsMyConfirm as $r): ?>
+      <article class="card">
+        <div class="grid grid--2">
+          <div>
+            <div class="muted"><?= who($r,$uid) ?> • waiting on you</div>
+            <h3 style="margin:.2rem 0"><?= h($r['skill_name']) ?></h3>
+            <div class="muted">With: <?= h(otherName($r,$uid)) ?></div>
+          </div>
+          <div style="text-align:right">
+            <div><?= number_format(agreed_hours($r),2) ?> h • <?= number_format(agreed_hours($r),2) ?> credits</div>
+            <form method="post" action="/actions/service_confirm.php" style="display:inline">
+              <?= csrf_field() ?>
+              <input type="hidden" name="transaction_id" value="<?= (int)$r['transaction_id'] ?>">
+              <button class="btn btn--primary btn--sm">Confirm & transfer</button>
+            </form>
+            <a class="btn btn--sm" href="/thread.php?id=<?= (int)$r['transaction_id'] ?>">Open thread</a>
+          </div>
+        </div>
+      </article>
+    <?php endforeach; ?>
   </div>
+<?php endif; ?>
 
-  <?php if (!$rows): ?>
-    <div class="notice">You don’t have any requests yet. Visit <a href="/browse.php">Browse skills</a> to get started.</div>
-  <?php else: ?>
-    <ul class="req-list">
-      <?php foreach ($rows as $r):
-        $otherName = $names[(int)$r['other_id']] ?? 'Student';
-        $isIncoming = ((int)$r['provider_id'] === $uid); // incoming if I'm provider
-        $hours = (float)($r['proposed_hours'] ?? 0) ?: (float)($r['requested_hours'] ?? 0);
-        [$badgeClass, $statusText] = map_status((string)$r['status']);
-        [$actText, $actUrl] = next_action($r, $uid);
-      ?>
-      <li class="req-card">
-        <div class="req-main">
-          <div class="req-title">
-            <a href="/thread.php?id=<?= (int)$r['req_id'] ?>"><?= h($r['skill_name']) ?></a>
+<?php if ($open): ?>
+  <h2>Open</h2>
+  <div class="stack">
+    <?php foreach ($open as $r): ?>
+      <article class="card">
+        <div class="grid grid--2">
+          <div>
+            <div class="muted"><?= who($r,$uid) ?> • <?= h($r['status']) ?></div>
+            <h3 style="margin:.2rem 0"><?= h($r['skill_name']) ?></h3>
+            <div class="muted">With: <?= h(otherName($r,$uid)) ?></div>
           </div>
-          <div class="req-meta">
-            <?= $isIncoming ? 'from' : 'with' ?>
-            <a href="/profile.php?u=<?= (int)$r['other_id'] ?>"><?= h($otherName) ?></a>
-            · <?= $hours ? h(rtrim(rtrim(number_format($hours, 2), '0'), '.')) : '—' ?>h
-            <?php if (!empty($r['category'])): ?> · <?= h($r['category']) ?><?php endif; ?>
+          <div style="text-align:right">
+            <div><?= number_format(agreed_hours($r),2) ?> h • <?= number_format(agreed_hours($r),2) ?> credits</div>
+            <a class="btn btn--sm" href="/thread.php?id=<?= (int)$r['transaction_id'] ?>">Open thread</a>
           </div>
         </div>
+      </article>
+    <?php endforeach; ?>
+  </div>
+<?php endif; ?>
 
-        <div class="req-side">
-          <span class="badge <?= $badgeClass ?>"><span class="dot"></span><?= h($statusText) ?></span>
-          <div class="req-actions">
-            <a class="btn btn--sm" href="/thread.php?id=<?= (int)$r['req_id'] ?>">Open</a>
-            <a class="btn btn--sm btn--primary" href="<?= h($actUrl) ?>"><?= h($actText) ?></a>
+<?php if ($completed): ?>
+  <h2 id="completed">Completed</h2>
+  <div class="stack">
+    <?php foreach ($completed as $r): ?>
+      <article class="card">
+        <div class="grid grid--2">
+          <div>
+            <div class="muted"><?= who($r,$uid) ?> • <strong>completed</strong></div>
+            <h3 style="margin:.2rem 0"><?= h($r['skill_name']) ?></h3>
+            <div class="muted">With: <?= h(otherName($r,$uid)) ?></div>
           </div>
-          <?php if (!empty($r['created_at'])): ?>
-            <div class="req-time"><?= h(date('M j, Y', strtotime($r['created_at']))) ?></div>
-          <?php endif; ?>
+          <div style="text-align:right">
+            <div><?= number_format((float)$r['fuss_credit_amount'] ?: agreed_hours($r),2) ?>
+              h • <?= number_format((float)$r['fuss_credit_amount'] ?: agreed_hours($r),2) ?> credits</div>
+            <a class="btn btn--sm" href="/thread.php?id=<?= (int)$r['transaction_id'] ?>">View thread</a>
+          </div>
         </div>
-      </li>
-      <?php endforeach; ?>
-    </ul>
-  <?php endif; ?>
-</section>
+      </article>
+    <?php endforeach; ?>
+  </div>
+<?php endif; ?>
 
-<?php include __DIR__ . '/../templates/footer.php'; ?>
+<?php include dirname(__DIR__).'/templates/footer.php'; ?>
