@@ -1,5 +1,6 @@
 <?php
-require_once dirname(__DIR__).'/inc/init.inc.php';
+$root = dirname(__DIR__, 2);
+require_once $root . '/inc/init.inc.php';
 
 $uid = require_login();
 validate_csrf();
