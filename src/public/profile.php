@@ -29,9 +29,13 @@ $offers = $s->fetchAll();
 
 <?php include dirname(__DIR__).'/templates/header.php'; ?>
 
-<?php if ($self): ?>
-  <p style="text-align:right"><a class="btn" href="/profile_edit.php">Edit profile</a></p>
+  <?php if ($self): ?>
+  <p style="text-align:right">
+    <a class="btn" href="/transactions.php">View Transactions</a>
+    <a class="btn" href="/profile_edit.php">Edit Profile</a>
+  </p>
 <?php endif; ?>
+
 
 <h1><?= h($student['full_name']) ?></h1>
 

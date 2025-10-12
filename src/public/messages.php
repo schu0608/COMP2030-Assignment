@@ -9,16 +9,15 @@ $pdo = db();
 $sql = "
   SELECT
     t.transaction_id, t.requester_id, t.provider_id, t.skill_id,
-    t.hours, t.proposed_hours, t.fuss_credit_amount, t.status,
+    t.hours AS proposed_hours,          
+    t.fuss_credit_amount, t.status,
     s.name AS skill_name,
     rq.full_name AS requester_name,
     pr.full_name AS provider_name
   FROM transactions t
-  JOIN skills   s  ON s.skill_id = t.skill_id
-  JOIN students rq ON rq.student_id = t.requester_id
-  JOIN students pr ON pr.student_id = t.provider_id
-  WHERE (t.requester_id = :me OR t.provider_id = :me)
+  ...
 ";
+
 $params = [':me' => $uid];
 if ($incomingOnly) $sql .= " AND t.provider_id = :me";
 $sql .= " ORDER BY t.transaction_id DESC";

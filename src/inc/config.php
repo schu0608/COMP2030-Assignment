@@ -2,9 +2,9 @@
 declare(strict_types=1);
 
 $CONFIG = [
-  'db_dsn'  => 'mysql:host=localhost;dbname=fussdb;charset=utf8mb4',
+  'db_dsn'  => 'mysql:host=db;dbname=fussdb;charset=utf8mb4',
   'db_user' => 'root',
-  'db_pass' => '',
+  'db_pass' => 'password',
   'email_domain' => 'flinders.edu.au',
   'uploads_dir' => __DIR__ . '/../public/uploads',
   'uploads_url' => '/uploads',

@@ -1,11 +1,8 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/session.inc.php';
+require_once __DIR__ . '/dbconn.inc.php';
 
-/**
- * Balance for a student from transactions table (read-only for Part 1).
- * Positive when they provided service, negative when requested.
- */
 function get_fuss_balance(int $studentId): float {
   $st = db()->prepare("
     SELECT COALESCE(SUM(CASE
