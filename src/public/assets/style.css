@@ -356,7 +356,6 @@ a.btn, button.btn { color: var(--text); }
     color: #ffffff;
   }
   .btn--primary:hover { background: #1d4ed8; } /* blue-700 */
-<<<<<<< HEAD
 }
 
 /* --- Unread badge on nav --- */
@@ -392,6 +391,3 @@ a.btn, button.btn { color: var(--text); }
     color: #111827;            /* slate-900 */
   }
 }
-=======
-}
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0

@@ -9,7 +9,6 @@ $incomingOnly = isset($_GET['incoming']) && $_GET['incoming'] === '1';
 
 $pageTitle = 'Requests';
 
-<<<<<<< HEAD
 /**
  * Fetch transactions for this user by status bucket.
  *
@@ -39,32 +38,6 @@ function fetch_requests(PDO $pdo, int $uid, array $statuses, bool $incomingOnly)
     WHERE (t.requester_id = ? OR t.provider_id = ?)
   ";
 
-=======
-
-function fetch_requests(PDO $pdo, int $uid, array $statuses, bool $incomingOnly): array {
-  if (!$statuses) return [];
-
-  // IN (?, ?, ?) list for statuses
-  $in = implode(',', array_fill(0, count($statuses), '?'));
-
-  $sql = "
-    SELECT
-      t.transaction_id, t.requester_id, t.provider_id,
-      t.skill_id, t.hours, t.fuss_credit_amount, t.status,
-      s.name AS skill_name,
-      r.full_name AS requester_name, r.student_id AS requester_id,
-      p.full_name AS provider_name, p.student_id AS provider_id,
-      CASE WHEN t.requester_id = ? THEN 'outgoing' ELSE 'incoming' END AS direction,
-      CASE WHEN t.requester_id = ? THEN p.full_name ELSE r.full_name END AS partner_name,
-      CASE WHEN t.requester_id = ? THEN p.student_id ELSE r.student_id END AS partner_id
-    FROM transactions t
-    JOIN skills   s ON s.skill_id = t.skill_id
-    JOIN students r ON r.student_id = t.requester_id
-    JOIN students p ON p.student_id = t.provider_id
-    WHERE (t.requester_id = ? OR t.provider_id = ?)
-  ";
-
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
   $params = [$uid, $uid, $uid, $uid, $uid];
 
   if ($incomingOnly) {
@@ -82,11 +55,7 @@ function fetch_requests(PDO $pdo, int $uid, array $statuses, bool $incomingOnly)
   return $st->fetchAll();
 }
 
-<<<<<<< HEAD
 // Buckets
-=======
-
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
 $OPEN_STATUSES = ['pending','accepted','proposed','confirm_requester','confirm_provider'];
 $DONE_STATUSES = ['confirmed'];
 
@@ -108,21 +77,13 @@ include dirname(__DIR__).'/templates/header.php';
 </form>
 
 <?php
-<<<<<<< HEAD
 // Helper to render one request card
-=======
-
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
 function req_card(array $r): void {
   $dir  = $r['direction']; // incoming/outgoing
   $with = $r['partner_name'];
   $withId = (int)$r['partner_id'];
 
-<<<<<<< HEAD
   // status badge colour choices (map to utility classes already in style.css)
-=======
-
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
   $status = (string)$r['status'];
   $badgeClass = match ($status) {
     'pending'            => 'badge badge--warn',
@@ -184,10 +145,7 @@ function req_card(array $r): void {
 <?php endif; ?>
 
 <style>
-<<<<<<< HEAD
   /* Small component styling to complement your style.css */
-=======
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
   .request-card__head {
     display:flex; align-items:center; justify-content:space-between; gap: 12px;
     margin-bottom: 10px;
@@ -215,8 +173,4 @@ function req_card(array $r): void {
   .link:hover { text-decoration: underline; }
 </style>
 
-<<<<<<< HEAD
 <?php include dirname(__DIR__).'/templates/footer.php'; ?>
-=======
-<?php include dirname(__DIR__).'/templates/footer.php'; ?>
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0

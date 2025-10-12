@@ -9,11 +9,7 @@ if ($tid <= 0) { http_response_code(404); exit('Thread not found'); }
 
 $pdo = db();
 
-<<<<<<< HEAD
 /** ---------- helpers ---------- */
-=======
-/** helper: does a table have a column? */
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
 function db_has_column(PDO $pdo, string $table, string $col): bool {
   $q = $pdo->prepare(
     "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
@@ -23,7 +19,6 @@ function db_has_column(PDO $pdo, string $table, string $col): bool {
   );
   $q->execute([$table, $col]);
   return (bool)$q->fetchColumn();
-<<<<<<< HEAD
 }
 function db_has_table(PDO $pdo, string $table): bool {
   $q = $pdo->prepare(
@@ -40,13 +35,6 @@ $hasReviewsT  = db_has_table($pdo, 'reviews');
 $hasReadsT    = db_has_table($pdo, 'message_reads');
 
 /** ---------- load transaction header ---------- */
-=======
-}
-
-$hasProp = db_has_column($pdo, 'transactions', 'proposed_hours');
-
-/** -------- Load transaction header -------- */
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
 $fieldList = "t.transaction_id,t.requester_id,t.provider_id,t.skill_id,
               t.hours,t.fuss_credit_amount,t.status";
 if ($hasProp) { $fieldList .= ",t.proposed_hours"; }
@@ -57,11 +45,7 @@ $sql = "
          r.full_name AS requester_name,
          p.full_name AS provider_name
     FROM transactions t
-<<<<<<< HEAD
     JOIN skills    s ON s.skill_id   = t.skill_id
-=======
-    JOIN skills    s ON s.skill_id = t.skill_id
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
     JOIN students  r ON r.student_id = t.requester_id
     JOIN students  p ON p.student_id = t.provider_id
    WHERE t.transaction_id = ?";
@@ -71,7 +55,6 @@ $st->execute([$tid]);
 $tx = $st->fetch();
 if (!$tx) { http_response_code(404); exit('Thread not found'); }
 
-<<<<<<< HEAD
 // permissions
 if ($uid !== (int)$tx['requester_id'] && $uid !== (int)$tx['provider_id']) {
   http_response_code(403); exit('Not allowed');
@@ -98,26 +81,11 @@ if ($hasReadsT) {
 }
 
 /** ---------- actions: send / propose (confirm handled by actions/service_confirm.php) ---------- */
-=======
-// permission
-if ($uid !== (int)$tx['requester_id'] && $uid !== (int)$tx['provider_id']) {
-  http_response_code(403); exit('Not allowed');
-}
-
-$isRequester = ($uid === (int)$tx['requester_id']);
-$isProvider  = ($uid === (int)$tx['provider_id']);
-
-/** -------- Actions (POST) -------- */
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   validate_csrf();
 
   // Send message
-<<<<<<< HEAD
   if (isset($_POST['send'], $_POST['body'])) {
-=======
-  if (isset($_POST['send']) && isset($_POST['body'])) {
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
     $body = trim((string)$_POST['body']);
     if ($body !== '') {
       $ins = $pdo->prepare(
@@ -129,13 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect("/thread.php?id=$tid");
   }
 
-<<<<<<< HEAD
   // Propose alternative hours (if supported)
   if ($hasProp && isset($_POST['propose'], $_POST['hours'])) {
-=======
-  // Propose alternative hours (only if column exists)
-  if ($hasProp && isset($_POST['propose']) && isset($_POST['hours'])) {
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
     $ph = max(0.5, min(10.0, (float)$_POST['hours']));
     $pdo->beginTransaction();
     $pdo->prepare(
@@ -150,58 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pdo->commit();
     redirect("/thread.php?id=$tid");
   }
-<<<<<<< HEAD
 }
 
 /** ---------- load conversation ---------- */
-=======
-
-  // Confirm completion (locks the thread)
-  if (isset($_POST['confirm']) && isset($_POST['final_hours'])) {
-    $h = max(0.5, min(100.0, (float)$_POST['final_hours']));
-
-    // choose next status -> both sides must confirm before 'confirmed'
-    $next = $isRequester ? 'confirm_requester' : 'confirm_provider';
-    if ($tx['status'] === ($isRequester ? 'confirm_provider' : 'confirm_requester')) {
-      $next = 'confirmed';
-    }
-
-    $pdo->beginTransaction();
-
-    // If you want credits == hours, keep this. Otherwise compute.
-    $pdo->prepare(
-      "UPDATE transactions
-          SET hours = ?, fuss_credit_amount = ?, status = ?
-        WHERE transaction_id = ?"
-    )->execute([$h, $h, $next, $tid]);
-
-    $pdo->prepare(
-      "INSERT INTO messages (transaction_id, sender_id, body, type)
-       VALUES (?,?,?, 'system')"
-    )->execute([$tid, $uid, ($next==='confirmed' ? "Service confirmed ({$h} h)" : "Confirmation recorded ({$h} h)")]);
-
-    // Transfer credits only when fully confirmed
-    if ($next === 'confirmed') {
-      $req = (int)$tx['requester_id'];
-      $pro = (int)$tx['provider_id'];
-
-      // Prevent negative requester balance
-      $bal = (float)$pdo->query("SELECT fuss_credits FROM students WHERE student_id={$req} FOR UPDATE")->fetchColumn();
-      if ($bal < $h) { $pdo->rollBack(); redirect("/thread.php?id=$tid&e=credits"); }
-
-      $pdo->prepare("UPDATE students SET fuss_credits = fuss_credits - ? WHERE student_id=?")
-          ->execute([$h, $req]);
-      $pdo->prepare("UPDATE students SET fuss_credits = fuss_credits + ? WHERE student_id=?")
-          ->execute([$h, $pro]);
-    }
-
-    $pdo->commit();
-    redirect("/thread.php?id=$tid");
-  }
-}
-
-/** -------- Load conversation -------- */
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
 $msgs = $pdo->prepare(
   "SELECT m.id, m.sender_id, m.body, m.type, m.created_at,
           s.full_name
@@ -213,7 +127,6 @@ $msgs = $pdo->prepare(
 $msgs->execute([$tid]);
 $messages = $msgs->fetchAll();
 
-<<<<<<< HEAD
 $proposed = $hasProp ? ($tx['proposed_hours'] ?? null) : null;
 
 /** ---------- review prompt state ---------- */
@@ -230,22 +143,14 @@ if ($hasReviewsT && $uid) {
 }
 
 /** ---------- page ---------- */
-=======
-// convenience
-$proposed = $hasProp ? ($tx['proposed_hours'] ?? null) : null;
-
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
 $pageTitle = $tx['skill_name'];
 include $ROOT . '/templates/header.php';
 ?>
 
-<<<<<<< HEAD
 <?php if (($_GET['e'] ?? '') === 'credits'): ?>
   <div class="notice error">Not enough credits to complete this request.</div>
 <?php endif; ?>
 
-=======
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
 <h1><?= h($tx['skill_name']) ?></h1>
 <p class="muted">
   Status: <?= h($tx['status']) ?>
@@ -258,27 +163,20 @@ include $ROOT . '/templates/header.php';
 
 <h2>Conversation</h2>
 <ul class="list">
-<<<<<<< HEAD
   <?php
     $lastSeenTs = strtotime($lastSeen);
     foreach ($messages as $m):
       $isNew = $hasReadsT && $m['created_at'] && (strtotime((string)$m['created_at']) > $lastSeenTs);
   ?>
-=======
-  <?php foreach ($messages as $m): ?>
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
     <li>
       <strong><?= h($m['full_name']) ?>:</strong>
       <?= nl2br(h($m['body'])) ?>
       <?php if ($m['type'] === 'system'): ?><span class="muted">(system)</span><?php endif; ?>
       <?php if ($m['type'] === 'proposal'): ?><span class="muted">(proposal)</span><?php endif; ?>
-<<<<<<< HEAD
       <?php if ($m['type'] === 'text'): ?><span class="muted">(text)</span><?php endif; ?>
       <?php if ($isNew): ?>
         <span class="chip" style="background:var(--accent);color:#0b1220;margin-left:6px">new</span>
       <?php endif; ?>
-=======
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
     </li>
   <?php endforeach; ?>
 </ul>
@@ -286,10 +184,7 @@ include $ROOT . '/templates/header.php';
 <?php if ($tx['status'] === 'confirmed'): ?>
   <div class="notice">This request is completed and locked.</div>
 <?php else: ?>
-<<<<<<< HEAD
   <!-- send message -->
-=======
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
   <form method="post" class="grid" style="margin-top:12px">
     <?= csrf_field() ?>
     <input type="text" name="body" placeholder="Write a message…" required>
@@ -305,7 +200,6 @@ include $ROOT . '/templates/header.php';
     </form>
   <?php endif; ?>
 
-<<<<<<< HEAD
   <!-- final confirmation (credits move happens in actions/service_confirm.php) -->
   <h2 style="margin-top:24px">Confirm completion</h2>
   <form method="post" action="/actions/service_confirm.php" class="grid grid--2">
@@ -365,14 +259,3 @@ if ($hasReviewsT):
 endif; ?>
 
 <?php include $ROOT . '/templates/footer.php';
-=======
-  <h2 style="margin-top:24px">Confirm completion</h2>
-  <form method="post" class="grid grid--2">
-    <?= csrf_field() ?>
-    <input type="number" step="0.5" min="0.5" name="final_hours" value="<?= h((string)$tx['hours']) ?>">
-    <button class="btn btn--primary" name="confirm" value="1">Confirm</button>
-  </form>
-<?php endif; ?>
-
-<?php include $ROOT . '/templates/footer.php';
->>>>>>> d87cc6609613933511d699835a909f373fc4d4b0
