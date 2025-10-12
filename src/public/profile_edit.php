@@ -29,8 +29,8 @@ $requested = $req->fetchAll();
 <label>College <input name="college" value="<?= h($me['college']) ?>"></label>
 </div>
 <label>Academic Year
-<select name="Academic Year">
-<option>1</option><option>2</option><option>3</option><option>4</option>
+<select name="academic_year">
+<option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
 </select>
 <label>Bio <textarea name="bio" rows="4"><?= h($me['bio']) ?></textarea></label>
 <label>Profile picture <input type="file" name="avatar" accept="image/*"></label>
