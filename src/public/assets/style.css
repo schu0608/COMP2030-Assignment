@@ -391,45 +391,59 @@ a.btn, button.btn { color: var(--text); }
     color: #111827;            /* slate-900 */
   }
 }
-/* --- NAV PILLS (the .tabs links) --- */
-.tabs { 
-  display: flex;
-  align-items: center;       /* vertically center all pills */
-  gap: 16px;
+/* ===== NAV PILLS: one consistent look (PUT THIS AT THE VERY END) ===== */
+
+/* container */
+.masthead .tabs{
+  display:flex;
+  align-items:center;
+  gap:16px;
 }
 
-/* Make each pill the same height and baseline */
-.tabs a{
-  display: inline-flex;      /* removes baseline bumps */
-  align-items: center;
-  justify-content: center;
-  height: 40px;              /* exact pill height */
-  line-height: 1;            /* stop baseline creep */
-  padding: 0 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--muted-bg);
-  color: var(--text);
-  text-decoration: none !important;   /* override global link underline */
-  position: relative;                  /* normalize any offsets */
-  top: 0;                              /* ensure no pill is nudged */
+/* base pill */
+.masthead .tabs a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:40px;
+  line-height:1;
+  padding:0 16px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--muted-bg);
+  color:var(--text);
+  text-decoration:none !important;   /* ignore global link underline */
+  position:relative;
 }
 
-/* Hover/active states that don't move the pill */
-.tabs a:hover,
-.tabs a.active{
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 1px var(--ring) inset;
-  transform: none;                     /* prevent vertical nudge */
-  top: 0;
+/* hover + focus (all pills identical) */
+.masthead .tabs a:hover,
+.masthead .tabs a:focus-visible{
+  background:var(--primary);
+  color:#fff;
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--ring);
 }
 
-/* Dark mode adjustments */
+/* active tab (same as hover so everything matches) */
+.masthead .tabs a.active{
+  background:var(--primary);
+  color:#fff;
+  border-color:var(--primary);
+}
+
+/* Dark mode: same behavior, slight base contrast */
 @media (prefers-color-scheme: dark){
-  .tabs a{ background:#1a2438; color:#e5e7eb; border-color:#334155; }
-  .tabs a:hover{ background:#212d47; }
-  .tabs a.active{ background:var(--accent); border-color:var(--accent); color:#0b1220; }
+  .masthead .tabs a{
+    background:#1a2438;
+    color:#e5e7eb;
+    border-color:#334155;
+  }
+  .masthead .tabs a:hover,
+  .masthead .tabs a:focus-visible,
+  .masthead .tabs a.active{
+    background:#2563eb;      /* vivid blue on hover/active */
+    border-color:#2563eb;
+    color:#fff;
+  }
 }
-
