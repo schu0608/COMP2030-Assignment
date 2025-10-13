@@ -1,7 +1,33 @@
 <?php
-require_once dirname(__DIR__).'/inc/init.inc.php';
+// --- bootstrap --------------------------------------------------------------
+$ROOT = dirname(__DIR__);
+require_once $ROOT . '/inc/init.inc.php';   // usually defines db(), auth helpers
 
-$uid = (int)($_GET['u'] ?? current_user_id() ?? 0);
+// Fallbacks if your auth helpers aren’t present
+if (!function_exists('current_user_id')) {
+  if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+  function current_user_id(): ?int {
+    return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+  }
+}
+if (!function_exists('require_login')) {
+  function require_login(): int {
+    $uid = current_user_id();
+    if (!$uid) {
+      header('Location: /auth/login.php?next=' . urlencode($_SERVER['REQUEST_URI'] ?? '/profile.php'));
+      exit;
+    }
+    return $uid;
+  }
+}
+
+// Decide which profile to show: ?u=ID or the current user
+$uid = $_GET['u'] ?? (current_user_id() ?? 0);
+$uid = (int)$uid;
+if ($uid <= 0) {
+  // if no ID and not logged in, send to login
+  $uid = require_login();
+}
 
 $q = db()->prepare(
   'SELECT st.*, COALESCE(r.avg_rating,0) avg_rating, COALESCE(r.rating_count,0) rating_count

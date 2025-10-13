@@ -1,45 +1,32 @@
 <?php
-// src/inc/auth.inc.php
 declare(strict_types=1);
-
-$ROOT = dirname(__DIR__); // points to /src
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
   session_start();
 }
 
-/**
- * Require a logged-in user. If not logged in, render a nice page and exit.
- * @return int user id
- */
-function require_login(): int {
-  if (empty($_SESSION['user_id'])) {
-    http_response_code(401);
+const AUTH_LOGIN    = '/auth/login.php';
+const AUTH_REGISTER = '/auth/register.php';
 
-    // For “return after login”
-    $next = $_SERVER['REQUEST_URI'] ?? '/';
-    // Make the variable available to the template
-    $GLOBALS['_auth_required_next'] = $next;
-
-    // Render a friendly page
-    require dirname(__DIR__) . '/templates/auth_required.php';
-    exit;
-  }
-  return (int)$_SESSION['user_id'];
+function current_user_id(): ?int {
+  return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
 }
 
-/**
- * Optional: admin guard (keeps your old behaviour but with nice page if not logged in).
- */
+function require_login(): int {
+  $uid = current_user_id();
+  if ($uid) return $uid;
+
+  $next = $_SERVER['REQUEST_URI'] ?? '/';
+  header('Location: ' . AUTH_LOGIN . '?next=' . urlencode($next));
+  exit;
+}
+
 function require_admin(): int {
   $uid = require_login();
-  // TEMP: either user_id=1 or a session flag can be admin
+  // TEMP: treat user_id=1 or session flag as admin
   if ($uid !== 1 && empty($_SESSION['is_admin'])) {
     http_response_code(403);
-    // Reuse the same template but with a different message if you want,
-    // or keep this minimal:
-    echo 'Forbidden: admin only.';
-    exit;
+    exit('Forbidden: admin only.');
   }
   return $uid;
 }

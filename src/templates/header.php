@@ -159,9 +159,9 @@ if ($uid) {
           </div>
         </div>
       <?php else: ?>
-        <a class="btn btn--ghost" href="/auth/login.php">Log in</a>
-        <a class="btn" href="/auth/register.php">Sign up</a>
-      <?php endif; ?>
+  <a class="btn btn--ghost" href="<?= AUTH_LOGIN ?>">Log in</a>
+  <a class="btn" href="<?= AUTH_REGISTER ?>">Sign up</a>
+<?php endif; ?>
     </div>
   </div>
 
