@@ -95,3 +95,11 @@ try {
   // Optional: log error
   redirect('/thread.php?id=' . $tx_id . '&e=server');
 }
+
+// after confirming:
+$stmt = $pdo->prepare("
+  INSERT INTO skill_popularity (skill_id, uses, last_used)
+  VALUES (:sid, 1, NOW())
+  ON DUPLICATE KEY UPDATE uses = uses + 1, last_used = NOW()
+");
+$stmt->execute([':sid' => $skillId]);

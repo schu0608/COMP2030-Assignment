@@ -144,6 +144,10 @@ if ($uid = (int)current_user_id()) {
       <!-- Requests: no badge -->
       <a class="<?= nav_active('/messages.php') ?>" href="/messages.php">Requests</a>
 
+      <!-- Recommendations page -->
+      <a href="/recommendations.php">Recommendations</a>
+
+
       <!-- Messages: show badge -->
       <a class="<?= nav_active('/pm/index.php') ?>" href="/pm/index.php">
         Messages

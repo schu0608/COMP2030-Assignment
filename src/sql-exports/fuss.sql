@@ -192,3 +192,20 @@ CREATE TABLE IF NOT EXISTS conversations (
   CONSTRAINT fk_conv_b FOREIGN KEY (b_id) REFERENCES students(student_id),
   UNIQUE KEY uniq_pair (a_id, b_id)  -- app guarantees a_id<b_id
 );
+CREATE TABLE IF NOT EXISTS zones (
+  zone_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE
+);
+
+ALTER TABLE students
+  ADD COLUMN zone_id INT NULL,
+  ADD CONSTRAINT fk_students_zone
+    FOREIGN KEY (zone_id) REFERENCES zones(zone_id);
+
+CREATE TABLE IF NOT EXISTS skill_popularity (
+  skill_id INT PRIMARY KEY,
+  uses INT NOT NULL DEFAULT 0,
+  last_used TIMESTAMP NULL,
+  FOREIGN KEY (skill_id) REFERENCES skills(skill_id)
+);
+
