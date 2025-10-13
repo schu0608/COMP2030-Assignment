@@ -8,6 +8,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 const AUTH_LOGIN    = '/auth/login.php';
 const AUTH_REGISTER = '/auth/register.php';
 
+
 function current_user_id(): ?int {
   return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
 }
