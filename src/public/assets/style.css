@@ -391,3 +391,37 @@ a.btn, button.btn { color: var(--text); }
     color: #111827;            /* slate-900 */
   }
 }
+/* NAV — make every pill align perfectly */
+.nav { 
+  display: flex; 
+  align-items: center;       /* vertical alignment */
+  gap: 16px;
+}
+
+.nav li { 
+  list-style: none; 
+}
+
+.nav a {
+  display: inline-flex;      /* fixes baseline bumps */
+  align-items: center;       /* centers text vertically */
+  justify-content: center;
+  height: 40px;              /* same height for all pills */
+  line-height: 1;            /* stop baseline creep */
+  padding: 0 16px;
+  border: 1px solid var(--ring,#2a3443);
+  border-radius: 12px;
+  text-decoration: none;
+  position: relative;        /* normalize any inherited offsets */
+  top: 0;                    /* ensure no pill is nudged up */
+}
+
+/* Active/hover states without shifting the pill */
+.nav a:hover,
+.nav a.active {
+  background: var(--chip-active, #0f172a);
+  box-shadow: 0 0 0 1px var(--ring,#2a3443) inset;
+  transform: none;           /* prevent translateY effects */
+  top: 0;                    /* override any old CSS that moved it */
+}
+
