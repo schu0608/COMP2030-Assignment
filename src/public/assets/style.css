@@ -391,37 +391,45 @@ a.btn, button.btn { color: var(--text); }
     color: #111827;            /* slate-900 */
   }
 }
-/* NAV — make every pill align perfectly */
-.nav { 
-  display: flex; 
-  align-items: center;       /* vertical alignment */
+/* --- NAV PILLS (the .tabs links) --- */
+.tabs { 
+  display: flex;
+  align-items: center;       /* vertically center all pills */
   gap: 16px;
 }
 
-.nav li { 
-  list-style: none; 
-}
-
-.nav a {
-  display: inline-flex;      /* fixes baseline bumps */
-  align-items: center;       /* centers text vertically */
+/* Make each pill the same height and baseline */
+.tabs a{
+  display: inline-flex;      /* removes baseline bumps */
+  align-items: center;
   justify-content: center;
-  height: 40px;              /* same height for all pills */
+  height: 40px;              /* exact pill height */
   line-height: 1;            /* stop baseline creep */
   padding: 0 16px;
-  border: 1px solid var(--ring,#2a3443);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  text-decoration: none;
-  position: relative;        /* normalize any inherited offsets */
-  top: 0;                    /* ensure no pill is nudged up */
+  background: var(--muted-bg);
+  color: var(--text);
+  text-decoration: none !important;   /* override global link underline */
+  position: relative;                  /* normalize any offsets */
+  top: 0;                              /* ensure no pill is nudged */
 }
 
-/* Active/hover states without shifting the pill */
-.nav a:hover,
-.nav a.active {
-  background: var(--chip-active, #0f172a);
-  box-shadow: 0 0 0 1px var(--ring,#2a3443) inset;
-  transform: none;           /* prevent translateY effects */
-  top: 0;                    /* override any old CSS that moved it */
+/* Hover/active states that don't move the pill */
+.tabs a:hover,
+.tabs a.active{
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--ring) inset;
+  transform: none;                     /* prevent vertical nudge */
+  top: 0;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark){
+  .tabs a{ background:#1a2438; color:#e5e7eb; border-color:#334155; }
+  .tabs a:hover{ background:#212d47; }
+  .tabs a.active{ background:var(--accent); border-color:var(--accent); color:#0b1220; }
 }
 
