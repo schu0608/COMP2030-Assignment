@@ -11,9 +11,16 @@ $pdo = db();
 function field($k,$d=null){ return $_POST[$k] ?? $d; }
 $msg = "";
 
+$zones = [];
+$zr = mysqli_query($conn, "SELECT zone_id, name FROM zones ORDER BY name");
+if ($zr) { while ($z = mysqli_fetch_assoc($zr)) $zones[] = $z; }
+
+
 /* ----------------------- CREATE ----------------------- */
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['create'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
+
+  $zone_id = isset($_POST['zone_id']) && $_POST['zone_id'] !== '' ? (int)$_POST['zone_id'] : null;
 
   $email = trim((string)field('email',''));
   $full  = trim((string)field('full_name',''));
@@ -43,6 +50,13 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['create'])) {
 /* ----------------------- UPDATE ----------------------- */
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
+
+  $zone_id = isset($_POST['zone_id']) && $_POST['zone_id'] !== '' ? (int)$_POST['zone_id'] : null;
+
+$stmt = mysqli_prepare($conn,
+  "UPDATE students SET email=?, full_name=?, fuss_credits=?, active=?, zone_id=? WHERE student_id=?");
+mysqli_stmt_bind_param($stmt, "ssdi ii", $email,$full,$cred,$active,$zone_id,$id); 
+
 
   $id    = (int)field('student_id',0);
   $email = trim((string)field('email',''));
@@ -184,66 +198,78 @@ try {
     <p class="sub" style="margin-top:6px">New accounts are created with a temporary password (<code>Temp123!</code>). Ask users to reset their password after first login.</p>
   </section>
 
-  <!-- Table -->
-  <section class="card">
-    <div class="table-wrap">
-      <table class="zebra compact">
-        <thead>
+<!-- Table -->
+<section class="card">
+  <div class="table-wrap">
+    <table class="zebra compact">
+      <thead>
+        <tr>
+          <th style="width:70px">ID</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th style="width:140px">Credits</th>
+          <th style="width:160px">Zone</th>
+          <th style="width:120px">Active</th>
+          <th style="width:280px">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if (empty($rows)): ?>
+          <tr><td colspan="7" class="empty">No students yet. Use the form above to add one.</td></tr>
+        <?php else: foreach ($rows as $row): ?>
           <tr>
-            <th style="width:70px">ID</th>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th style="width:140px">Credits</th>
-            <th style="width:120px">Active</th>
-            <th style="width:280px">Actions</th>
+            <td><?= (int)$row['student_id'] ?></td>
+            <td>
+              <form method="post" class="inline-form">
+                <?= function_exists('csrf_field') ? csrf_field() : '' ?>
+                <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
+                <input name="full_name" value="<?= h($row['full_name']) ?>" class="in-cell">
+            </td>
+            <td><input type="email" name="email" value="<?= h($row['email']) ?>" class="in-cell wide"></td>
+            <td><input type="number" step="0.01" min="0" name="fuss_credits" value="<?= (float)$row['fuss_credits'] ?>" class="in-cell short"></td>
+
+            <!-- Zone dropdown -->
+            <td>
+              <select name="zone_id" class="in-cell">
+                <option value="">—</option>
+                <?php foreach ($zones as $z): ?>
+                  <option
+                    value="<?= (int)$z['zone_id'] ?>"
+                    <?= ((int)($row['zone_id'] ?? 0) === (int)$z['zone_id']) ? 'selected' : '' ?>>
+                    <?= h($z['name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+
+            <td>
+              <label class="flag">
+                <input type="checkbox" name="active" <?= ((int)$row['active'] ? 'checked' : '') ?>>
+                <span class="flag-text"><?= ((int)$row['active'] ? 'Yes' : 'No') ?></span>
+              </label>
+            </td>
+            <td class="actions">
+              <button name="update" value="1" class="btn sm">Save</button>
+              </form>
+
+              <form method="post" onsubmit="return confirm('Are you sure?');" class="inline-form">
+                <?= function_exists('csrf_field') ? csrf_field() : '' ?>
+                <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
+                <input type="hidden" name="to" value="<?= ((int)$row['active'] ? 0 : 1) ?>">
+                <button name="toggle_active" value="1" class="btn sm ghost">
+                  <?= ((int)$row['active'] ? 'Suspend' : 'Reactivate') ?>
+                </button>
+              </form>
+
+              <form method="post" onsubmit="return confirm('Delete this student? This cannot be undone.');" class="inline-form">
+                <?= function_exists('csrf_field') ? csrf_field() : '' ?>
+                <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
+                <button name="delete" value="1" class="btn sm danger">Delete</button>
+              </form>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          <?php if (!$rows): ?>
-            <tr><td colspan="6" class="empty">No students yet. Use the form above to add one.</td></tr>
-          <?php else: foreach ($rows as $row): ?>
-            <tr>
-              <td><?= (int)$row['student_id'] ?></td>
-              <td>
-                <form method="post" class="inline-form">
-                  <?= function_exists('csrf_field') ? csrf_field() : '' ?>
-                  <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
-                  <input name="full_name" value="<?= h($row['full_name']) ?>" class="in-cell">
-              </td>
-              <td><input type="email" name="email" value="<?= h($row['email']) ?>" class="in-cell wide"></td>
-              <td><input type="number" step="0.01" min="0" name="fuss_credits" value="<?= (float)$row['fuss_credits'] ?>" class="in-cell short"></td>
-              <td>
-                <label class="flag">
-                  <input type="checkbox" name="active" <?= ((int)$row['active'] ? 'checked' : '') ?>>
-                  <span class="flag-text"><?= ((int)$row['active'] ? 'Yes' : 'No') ?></span>
-                </label>
-              </td>
-              <td class="actions">
-                <button name="update" value="1" class="btn sm">Save</button>
-                </form>
-
-                <form method="post" onsubmit="return confirm('Are you sure?');" class="inline-form">
-                  <?= function_exists('csrf_field') ? csrf_field() : '' ?>
-                  <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
-                  <input type="hidden" name="to" value="<?= ((int)$row['active'] ? 0 : 1) ?>">
-                  <button name="toggle_active" value="1" class="btn sm ghost">
-                    <?= ((int)$row['active'] ? 'Suspend' : 'Reactivate') ?>
-                  </button>
-                </form>
-
-                <form method="post" onsubmit="return confirm('Delete this student? This cannot be undone.');" class="inline-form">
-                  <?= function_exists('csrf_field') ? csrf_field() : '' ?>
-                  <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
-                  <button name="delete" value="1" class="btn sm danger">Delete</button>
-                </form>
-              </td>
-            </tr>
-          <?php endforeach; endif; ?>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-</div>
-</body>
-</html>
+        <?php endforeach; endif; ?>
+      </tbody>
+    </table>
+  </div>
+</section>
