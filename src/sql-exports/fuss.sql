@@ -201,5 +201,17 @@ ALTER TABLE students
   ADD COLUMN zone_id INT NULL,
   ADD CONSTRAINT fk_students_zone
     FOREIGN KEY (zone_id) REFERENCES zones(zone_id);
+
+INSERT INTO zones (name) VALUES
+  ('Hub'),
+  ('Library'),
+  ('Engineering'),
+  ('Health Sciences'),
+  ('Bedford Park Central'),
+  ('Sturt'),
+  ('Law & Commerce'),
+  ('Tonsley')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
     
  

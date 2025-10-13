@@ -147,6 +147,10 @@ if ($uid = (int)current_user_id()) {
       <!-- Recommendations page -->
       <a href="/recommendations.php">Recommendations</a>
 
+      <!-- profile zone -->
+      <li><a href="/profile_zone.php">My Zone</a></li>
+
+
 
       <!-- Messages: show badge -->
       <a class="<?= nav_active('/pm/index.php') ?>" href="/pm/index.php">
