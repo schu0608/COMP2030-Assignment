@@ -447,3 +447,8 @@ a.btn, button.btn { color: var(--text); }
     color:#fff;
   }
 }
+/* Nav list reset */
+.masthead .tabs,
+.masthead .tabs ul { margin:0; padding:0; }
+.masthead .tabs li { list-style: none; }
+
