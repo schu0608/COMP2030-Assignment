@@ -4,10 +4,64 @@ $ROOT = dirname(__DIR__);
 require_once $ROOT . '/inc/init.inc.php';
 
 $uid = require_login();
-$tid = (int)($_GET['id'] ?? 0);
-if ($tid <= 0) { http_response_code(404); exit('Thread not found'); }
+$pdo = db();  
 
-$pdo = db();
+
+function go(string $url): void {
+  if (function_exists('redirect')) { redirect($url); }
+  header("Location: $url");
+  exit;
+}
+
+function find_open_tx(PDO $pdo, int $me, int $provider, int $skill): ?int {
+  $st = $pdo->prepare("
+    SELECT transaction_id
+    FROM transactions
+    WHERE requester_id = :me
+      AND provider_id  = :prov
+      AND skill_id     = :skill
+      AND status IN ('pending','accepted','proposed','confirm_requester','confirm_provider')
+    ORDER BY transaction_id DESC
+    LIMIT 1
+  ");
+  $st->execute([':me'=>$me, ':prov'=>$provider, ':skill'=>$skill]);
+  $id = $st->fetchColumn();
+  return $id ? (int)$id : null;
+}
+
+function create_tx(PDO $pdo, int $me, int $provider, int $skill): int {
+  $hours = 1.0; // default; adjust if you use different initial hours/credits
+  $st = $pdo->prepare("
+    INSERT INTO transactions (requester_id, provider_id, skill_id, hours, fuss_credit_amount, status)
+    VALUES (:me, :prov, :skill, :hrs, :hrs, 'pending')
+  ");
+  $st->execute([':me'=>$me, ':prov'=>$provider, ':skill'=>$skill, ':hrs'=>$hours]);
+  return (int)$pdo->lastInsertId();
+}
+
+// accept either id OR provider+skill
+$tid = (int)($_GET['id'] ?? 0);
+if ($tid <= 0) {
+  $provider = (int)($_GET['provider'] ?? 0);
+  $skill    = (int)($_GET['skill'] ?? 0);
+
+  if ($provider && $skill) {
+    if ($provider === $uid) {
+      http_response_code(400); exit('Cannot start a thread with yourself.');
+    }
+    $existing = find_open_tx($pdo, $uid, $provider, $skill);
+    if ($existing) {
+      go("/thread.php?id=".$existing);
+    }
+    $newId = create_tx($pdo, $uid, $provider, $skill);
+    go("/thread.php?id=".$newId);
+  }
+
+  // neither id nor provider+skill provided
+  http_response_code(404); exit('Thread not found');
+}
+
+
 
 /** ---------- helpers ---------- */
 function db_has_column(PDO $pdo, string $table, string $col): bool {
