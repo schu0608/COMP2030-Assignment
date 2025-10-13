@@ -1,10 +1,10 @@
 /* -----------------------------------------------------------------------
-   FUSS — consolidated schema update (run on MySQL 8.x)
+   FUSS — consolidated schema (MySQL 8.x+)
    ----------------------------------------------------------------------- */
 CREATE DATABASE IF NOT EXISTS fussdb;
 USE fussdb;
 
-/* 1) Core tables (keep if they already exist) */
+/* 1) Core tables */
 CREATE TABLE IF NOT EXISTS students (
   student_id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(100) UNIQUE NOT NULL,
@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS student_skills (
   skill_id INT NOT NULL,
   role VARCHAR(20), /* 'offered' or 'requested' */
   details TEXT,
-  FOREIGN KEY (student_id) REFERENCES students(student_id),
-  FOREIGN KEY (skill_id)   REFERENCES skills(skill_id)
+  CONSTRAINT fk_ss_student FOREIGN KEY (student_id) REFERENCES students(student_id),
+  CONSTRAINT fk_ss_skill   FOREIGN KEY (skill_id)   REFERENCES skills(skill_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS transactions (
@@ -44,9 +44,9 @@ CREATE TABLE IF NOT EXISTS transactions (
   hours        DECIMAL(4,2) NOT NULL,
   fuss_credit_amount DECIMAL(6,2) NOT NULL,
   status       VARCHAR(20) NOT NULL DEFAULT 'pending',
-  FOREIGN KEY (requester_id) REFERENCES students(student_id),
-  FOREIGN KEY (provider_id)  REFERENCES students(student_id),
-  FOREIGN KEY (skill_id)     REFERENCES skills(skill_id)
+  CONSTRAINT fk_t_req   FOREIGN KEY (requester_id) REFERENCES students(student_id),
+  CONSTRAINT fk_t_pro   FOREIGN KEY (provider_id)  REFERENCES students(student_id),
+  CONSTRAINT fk_t_skill FOREIGN KEY (skill_id)     REFERENCES skills(skill_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS flagged_content (
@@ -55,10 +55,10 @@ CREATE TABLE IF NOT EXISTS flagged_content (
   content TEXT,
   reported_by INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (reported_by) REFERENCES students(student_id)
+  CONSTRAINT fk_flag_reporter FOREIGN KEY (reported_by) REFERENCES students(student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-/* 2) Extend transactions for negotiation lifecycle */
+/* 2) Transactions lifecycle & negotiation */
 ALTER TABLE transactions
   MODIFY COLUMN status ENUM(
     'pending','accepted','rejected','proposed',
@@ -68,8 +68,7 @@ ALTER TABLE transactions
 ALTER TABLE transactions
   ADD COLUMN IF NOT EXISTS proposed_hours DECIMAL(4,2) NULL AFTER hours;
 
-/* 3) Request workflow used by /messages.php and threads
-      (this keeps requests separate from the final credit ledger) */
+/* 3) Request workflow (messages/threads) */
 CREATE TABLE IF NOT EXISTS service_requests (
   id               INT AUTO_INCREMENT PRIMARY KEY,
   requester_id     INT NOT NULL,
@@ -108,7 +107,7 @@ CREATE TABLE IF NOT EXISTS service_messages (
   CONSTRAINT fk_sm_sender  FOREIGN KEY (sender_id)  REFERENCES students(student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-/* 4) (Optional) messaging tied directly to transactions (if you use it) */
+/* 4) Optional transaction-linked messages */
 CREATE TABLE IF NOT EXISTS messages (
   id INT AUTO_INCREMENT PRIMARY KEY,
   transaction_id INT NOT NULL,
@@ -121,7 +120,7 @@ CREATE TABLE IF NOT EXISTS messages (
   INDEX (transaction_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-/* 5) Reviews + profile ratings */
+/* 5) Reviews + ratings */
 CREATE TABLE IF NOT EXISTS reviews (
   id INT AUTO_INCREMENT PRIMARY KEY,
   transaction_id INT NOT NULL,
@@ -144,20 +143,19 @@ SELECT
 FROM reviews
 GROUP BY reviewee_id;
 
--- People-to-people conversations (one row per pair)
+/* 6) Person-to-person conversations (single, non-duplicate definition) */
 CREATE TABLE IF NOT EXISTS conversations (
   conversation_id INT AUTO_INCREMENT PRIMARY KEY,
-  a_id INT NOT NULL,             -- smaller user id
-  b_id INT NOT NULL,             -- larger user id
+  a_id INT NOT NULL,    -- smaller user id
+  b_id INT NOT NULL,    -- larger user id
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uniq_pair (a_id, b_id),
   INDEX idx_updated (updated_at),
-  FOREIGN KEY (a_id) REFERENCES students(student_id),
-  FOREIGN KEY (b_id) REFERENCES students(student_id)
-);
+  CONSTRAINT fk_conv_a FOREIGN KEY (a_id) REFERENCES students(student_id),
+  CONSTRAINT fk_conv_b FOREIGN KEY (b_id) REFERENCES students(student_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Messages (read tracking via read_at)
 CREATE TABLE IF NOT EXISTS pm_messages (
   id INT AUTO_INCREMENT PRIMARY KEY,
   conversation_id INT NOT NULL,
@@ -169,7 +167,7 @@ CREATE TABLE IF NOT EXISTS pm_messages (
   INDEX ix_conv_read (conversation_id, read_at),
   CONSTRAINT fk_msg_conv FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id),
   CONSTRAINT fk_msg_sender FOREIGN KEY (sender_id) REFERENCES students(student_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS message_reads (
   user_id         INT NOT NULL,
@@ -178,34 +176,26 @@ CREATE TABLE IF NOT EXISTS message_reads (
   PRIMARY KEY (user_id, transaction_id),
   FOREIGN KEY (user_id)        REFERENCES students(student_id),
   FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Conversations (store user pair as (min, max) to avoid duplicates)
-CREATE TABLE IF NOT EXISTS conversations (
-  conversation_id INT AUTO_INCREMENT PRIMARY KEY,
-  a_id INT NOT NULL,
-  b_id INT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX ix_a (a_id), INDEX ix_b (b_id),
-  CONSTRAINT fk_conv_a FOREIGN KEY (a_id) REFERENCES students(student_id),
-  CONSTRAINT fk_conv_b FOREIGN KEY (b_id) REFERENCES students(student_id),
-  UNIQUE KEY uniq_pair (a_id, b_id)  -- app guarantees a_id<b_id
-);
+/* 7) Zones + popularity (for recommendations) */
 CREATE TABLE IF NOT EXISTS zones (
   zone_id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 ALTER TABLE students
-  ADD COLUMN zone_id INT NULL,
-  ADD CONSTRAINT fk_students_zone
-    FOREIGN KEY (zone_id) REFERENCES zones(zone_id);
+  ADD COLUMN IF NOT EXISTS zone_id INT NULL,
+  ALGORITHM=INPLACE, LOCK=NONE;
+
+-- add FK (ignore error if exists)
+-- MySQL doesn’t support IF NOT EXISTS for FKs, so you may re-run safely via a migration script
+ALTER TABLE students
+  ADD CONSTRAINT fk_students_zone FOREIGN KEY (zone_id) REFERENCES zones(zone_id);
 
 CREATE TABLE IF NOT EXISTS skill_popularity (
   skill_id INT PRIMARY KEY,
   uses INT NOT NULL DEFAULT 0,
   last_used TIMESTAMP NULL,
-  FOREIGN KEY (skill_id) REFERENCES skills(skill_id)
-);
-
+  CONSTRAINT fk_skill_popularity_skill FOREIGN KEY (skill_id) REFERENCES skills(skill_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
