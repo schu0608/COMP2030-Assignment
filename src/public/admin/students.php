@@ -1,129 +1,188 @@
 <?php
-// public/admin/dashboard.php (and other admin pages)
-require_once dirname(__DIR__, 2) . '/inc/init.inc.php';   // or auth.inc.php – wherever require_login() lives
-$uid = require_login(); // now safe to call
+// --- includes ---------------------------------------------------------------
+require_once dirname(__DIR__, 2) . '/inc/dbconn.inc.php';   // provides db(): PDO
 
-
-
-$uid = require_login();
-if (!function_exists('is_admin') ? $uid !== 1 : !is_admin($uid)) {
-  http_response_code(403);
-  exit('Forbidden');
+// Try to load real auth helpers if present
+$authPath = dirname(__DIR__, 2) . '/inc/auth.inc.php';
+if (file_exists($authPath)) {
+  require_once $authPath;
 }
 
+// Ensure session for any fallback auth
+if (session_status() !== PHP_SESSION_ACTIVE) {
+  session_start();
+}
+
+// Minimal helpers if your project doesn't already define them
+if (!function_exists('h')) {
+  function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
+}
+if (!function_exists('field')) {
+  function field(string $k, $default = null) { return $_POST[$k] ?? $default; }
+}
+if (!function_exists('require_login')) {
+  function require_login(): int {
+    if (empty($_SESSION['user_id'])) {
+      header('Location: /COMP2030-ASSIGNMENT/src/public/login.php');
+      exit;
+    }
+    return (int)$_SESSION['user_id'];
+  }
+}
+if (!function_exists('require_admin')) {
+  function require_admin(): int {
+    $uid = require_login();
+    // TEMP: treat user_id=1 or explicit flag as admin
+    if ($uid !== 1 && empty($_SESSION['is_admin'])) {
+      http_response_code(403);
+      echo 'Forbidden: admin only.';
+      exit;
+    }
+    return $uid;
+  }
+}
+
+// --- auth gate --------------------------------------------------------------
 $pdo = db();
-function field($k,$d=null){ return $_POST[$k] ?? $d; }
+if (function_exists('require_admin')) {
+  $uid = require_admin();
+} elseif (function_exists('require_login')) {
+  $uid = require_login();
+} else {
+  // last resort (shouldn’t happen because we defined fallbacks above)
+  $uid = (int)($_SESSION['user_id'] ?? 0);
+  if (!$uid) {
+    http_response_code(403);
+    exit('Forbidden (login required)');
+  }
+}
+
+// --- load zones for dropdown ------------------------------------------------
+$zones = [];
+try {
+  $zones = $pdo->query("SELECT zone_id, name FROM zones ORDER BY name")
+               ->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+  $zones = []; // safe default; page will still render
+}
+
+// --- actions ---------------------------------------------------------------
 $msg = "";
 
-$zones = [];
-$zr = mysqli_query($conn, "SELECT zone_id, name FROM zones ORDER BY name");
-if ($zr) { while ($z = mysqli_fetch_assoc($zr)) $zones[] = $z; }
-
-
-/* ----------------------- CREATE ----------------------- */
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['create'])) {
+// CREATE
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
-  $zone_id = isset($_POST['zone_id']) && $_POST['zone_id'] !== '' ? (int)$_POST['zone_id'] : null;
-
-  $email = trim((string)field('email',''));
-  $full  = trim((string)field('full_name',''));
-  $cred  = max(0.0,(float)field('fuss_credits',0));
-  $active= isset($_POST['active']) ? 1 : 0;
+  $email   = trim((string) field('email', ''));
+  $full    = trim((string) field('full_name', ''));
+  $cred    = max(0.0, (float) field('fuss_credits', 0));
+  $active  = isset($_POST['active']) ? 1 : 0;
+  $zone_id = ($_POST['zone_id'] ?? '') === '' ? null : (int) $_POST['zone_id'];
 
   if ($email !== '' && $full !== '') {
-    // set a temporary password (hashed) – admin can reset later
+    // temporary password; user should reset later
     $hash = password_hash('Temp123!', PASSWORD_DEFAULT);
-
     $st = $pdo->prepare("
-      INSERT INTO students (email, password, full_name, fuss_credits, active)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO students (email, password, full_name, fuss_credits, active, zone_id)
+      VALUES (:email, :pass, :full, :cred, :active, :zone)
     ");
     try {
-      $ok = $st->execute([$email, $hash, $full, $cred, $active]);
-      $msg = $ok ? "Created student: ".h($full) : "Create failed.";
+      $st->execute([
+        ':email'  => $email,
+        ':pass'   => $hash,
+        ':full'   => $full,
+        ':cred'   => $cred,
+        ':active' => $active,
+        ':zone'   => $zone_id
+      ]);
+      $msg = "Created student: " . h($full);
     } catch (PDOException $e) {
-      // Handle duplicate email etc.
-      $msg = "Create failed: ".h($e->getMessage());
+      $msg = "Create failed: " . h($e->getMessage());
     }
   } else {
     $msg = "Email and Full name are required.";
   }
 }
 
-/* ----------------------- UPDATE ----------------------- */
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['update'])) {
+// UPDATE
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
-  $zone_id = isset($_POST['zone_id']) && $_POST['zone_id'] !== '' ? (int)$_POST['zone_id'] : null;
+  $id      = (int) field('student_id', 0);
+  $email   = trim((string) field('email', ''));
+  $full    = trim((string) field('full_name', ''));
+  $cred    = max(0.0, (float) field('fuss_credits', 0));
+  $active  = isset($_POST['active']) ? 1 : 0;
+  $zone_id = ($_POST['zone_id'] ?? '') === '' ? null : (int) $_POST['zone_id'];
 
-$stmt = mysqli_prepare($conn,
-  "UPDATE students SET email=?, full_name=?, fuss_credits=?, active=?, zone_id=? WHERE student_id=?");
-mysqli_stmt_bind_param($stmt, "ssdi ii", $email,$full,$cred,$active,$zone_id,$id); 
-
-
-  $id    = (int)field('student_id',0);
-  $email = trim((string)field('email',''));
-  $full  = trim((string)field('full_name',''));
-  $cred  = max(0.0,(float)field('fuss_credits',0));
-  $active= isset($_POST['active']) ? 1 : 0;
-
-  if ($id > 0 && $email !== '' && $full !== ''){
+  if ($id > 0 && $email !== '' && $full !== '') {
     $st = $pdo->prepare("
-      UPDATE students SET email=?, full_name=?, fuss_credits=?, active=? WHERE student_id=?
+      UPDATE students
+         SET email = :email,
+             full_name = :full,
+             fuss_credits = :cred,
+             active = :active,
+             zone_id = :zone
+       WHERE student_id = :id
     ");
     try {
-      $ok = $st->execute([$email,$full,$cred,$active,$id]);
-      $msg = $ok ? "Updated student #$id" : "Update failed.";
+      $st->execute([
+        ':email'  => $email,
+        ':full'   => $full,
+        ':cred'   => $cred,
+        ':active' => $active,
+        ':zone'   => $zone_id,
+        ':id'     => $id,
+      ]);
+      $msg = "Updated student #{$id}";
     } catch (PDOException $e) {
-      $msg = "Update failed: ".h($e->getMessage());
+      $msg = "Update failed: " . h($e->getMessage());
     }
   } else {
     $msg = "Missing required fields for update.";
   }
 }
 
-/* ----------------------- TOGGLE ACTIVE ----------------------- */
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['toggle_active'])) {
+// TOGGLE ACTIVE
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_active'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
-  $id = (int)field('student_id',0);
-  $to = (int)field('to',0);
-  if ($id > 0){
-    $st = $pdo->prepare("UPDATE students SET active=? WHERE student_id=?");
-    $ok = $st->execute([$to,$id]);
-    $msg = $ok ? (($to?'Reactivated':'Suspended')." student #$id") : "Toggle failed.";
+  $id = (int) field('student_id', 0);
+  $to = (int) field('to', 0);
+  if ($id > 0) {
+    $st = $pdo->prepare("UPDATE students SET active = :a WHERE student_id = :id");
+    $ok = $st->execute([':a' => $to, ':id' => $id]);
+    $msg = $ok ? (($to ? 'Reactivated' : 'Suspended') . " student #{$id}") : "Toggle failed.";
   } else {
     $msg = "Invalid student id.";
   }
 }
 
-/* ----------------------- DELETE ----------------------- */
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['delete'])) {
+// DELETE
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
-  $id = (int)field('student_id',0);
-  if ($id > 0){
-    $st = $pdo->prepare("DELETE FROM students WHERE student_id=?");
+  $id = (int) field('student_id', 0);
+  if ($id > 0) {
+    $st = $pdo->prepare("DELETE FROM students WHERE student_id = :id");
     try {
-      $ok = $st->execute([$id]);
-      $msg = $ok ? "Deleted student #$id" : "Delete failed.";
+      $ok = $st->execute([':id' => $id]);
+      $msg = $ok ? "Deleted student #{$id}" : "Delete failed.";
     } catch (PDOException $e) {
-      $msg = "Delete failed: ".h($e->getMessage());
+      $msg = "Delete failed: " . h($e->getMessage());
     }
   } else {
     $msg = "Invalid student id.";
   }
 }
 
-/* ----------------------- FETCH LIST ----------------------- */
-$rows = [];
+// --- fetch table data -------------------------------------------------------
 try {
   $rows = $pdo->query("
-    SELECT student_id, full_name, email, fuss_credits, active
+    SELECT student_id, full_name, email, fuss_credits, active, zone_id
     FROM students
     ORDER BY student_id ASC
-  ")->fetchAll();
+  ")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
   $rows = [];
 }
@@ -183,7 +242,7 @@ try {
   <header>
     <h1>Student Management</h1>
     <p class="sub">View, add, edit, suspend/reactivate, or delete student accounts.</p>
-    <p><a href="/admin/dashboard.php">← Back to Dashboard</a></p>
+    <p><a href="dashboard.php">← Back to Dashboard</a></p>
   </header>
 
   <?php if ($msg): ?><div class="msg"><?= h($msg) ?></div><?php endif; ?>
@@ -197,83 +256,90 @@ try {
       <input type="email" name="email" placeholder="Email" required style="min-width:260px">
       <input type="number" step="0.01" min="0" name="fuss_credits" placeholder="Credits" value="0" class="in-cell short">
       <label><input type="checkbox" name="active" checked> Active</label>
+      <select name="zone_id">
+        <option value="">— Zone —</option>
+        <?php foreach ($zones as $z): ?>
+          <option value="<?= (int)$z['zone_id'] ?>"><?= h($z['name']) ?></option>
+        <?php endforeach; ?>
+      </select>
       <button type="submit" class="btn">Add Student</button>
     </form>
     <p class="sub" style="margin-top:6px">New accounts are created with a temporary password (<code>Temp123!</code>). Ask users to reset their password after first login.</p>
   </section>
 
-<!-- Table -->
-<section class="card">
-  <div class="table-wrap">
-    <table class="zebra compact">
-      <thead>
-        <tr>
-          <th style="width:70px">ID</th>
-          <th>Full Name</th>
-          <th>Email</th>
-          <th style="width:140px">Credits</th>
-          <th style="width:160px">Zone</th>
-          <th style="width:120px">Active</th>
-          <th style="width:280px">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (empty($rows)): ?>
-          <tr><td colspan="7" class="empty">No students yet. Use the form above to add one.</td></tr>
-        <?php else: foreach ($rows as $row): ?>
+  <!-- Table -->
+  <section class="card">
+    <div class="table-wrap">
+      <table class="zebra compact">
+        <thead>
           <tr>
-            <td><?= (int)$row['student_id'] ?></td>
-            <td>
-              <form method="post" class="inline-form">
-                <?= function_exists('csrf_field') ? csrf_field() : '' ?>
-                <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
-                <input name="full_name" value="<?= h($row['full_name']) ?>" class="in-cell">
-            </td>
-            <td><input type="email" name="email" value="<?= h($row['email']) ?>" class="in-cell wide"></td>
-            <td><input type="number" step="0.01" min="0" name="fuss_credits" value="<?= (float)$row['fuss_credits'] ?>" class="in-cell short"></td>
-
-            <!-- Zone dropdown -->
-            <td>
-              <select name="zone_id" class="in-cell">
-                <option value="">—</option>
-                <?php foreach ($zones as $z): ?>
-                  <option
-                    value="<?= (int)$z['zone_id'] ?>"
-                    <?= ((int)($row['zone_id'] ?? 0) === (int)$z['zone_id']) ? 'selected' : '' ?>>
-                    <?= h($z['name']) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </td>
-
-            <td>
-              <label class="flag">
-                <input type="checkbox" name="active" <?= ((int)$row['active'] ? 'checked' : '') ?>>
-                <span class="flag-text"><?= ((int)$row['active'] ? 'Yes' : 'No') ?></span>
-              </label>
-            </td>
-            <td class="actions">
-              <button name="update" value="1" class="btn sm">Save</button>
-              </form>
-
-              <form method="post" onsubmit="return confirm('Are you sure?');" class="inline-form">
-                <?= function_exists('csrf_field') ? csrf_field() : '' ?>
-                <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
-                <input type="hidden" name="to" value="<?= ((int)$row['active'] ? 0 : 1) ?>">
-                <button name="toggle_active" value="1" class="btn sm ghost">
-                  <?= ((int)$row['active'] ? 'Suspend' : 'Reactivate') ?>
-                </button>
-              </form>
-
-              <form method="post" onsubmit="return confirm('Delete this student? This cannot be undone.');" class="inline-form">
-                <?= function_exists('csrf_field') ? csrf_field() : '' ?>
-                <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
-                <button name="delete" value="1" class="btn sm danger">Delete</button>
-              </form>
-            </td>
+            <th style="width:70px">ID</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th style="width:140px">Credits</th>
+            <th style="width:160px">Zone</th>
+            <th style="width:120px">Active</th>
+            <th style="width:280px">Actions</th>
           </tr>
-        <?php endforeach; endif; ?>
-      </tbody>
-    </table>
-  </div>
-</section>
+        </thead>
+        <tbody>
+          <?php if (empty($rows)): ?>
+            <tr><td colspan="7" class="empty">No students yet. Use the form above to add one.</td></tr>
+          <?php else: foreach ($rows as $row): ?>
+            <tr>
+              <td><?= (int)$row['student_id'] ?></td>
+              <td>
+                <form method="post" class="inline-form">
+                  <?= function_exists('csrf_field') ? csrf_field() : '' ?>
+                  <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
+                  <input name="full_name" value="<?= h($row['full_name']) ?>" class="in-cell">
+              </td>
+              <td><input type="email" name="email" value="<?= h($row['email']) ?>" class="in-cell wide"></td>
+              <td><input type="number" step="0.01" min="0" name="fuss_credits" value="<?= (float)$row['fuss_credits'] ?>" class="in-cell short"></td>
+
+              <td>
+                <select name="zone_id" class="in-cell">
+                  <option value="">—</option>
+                  <?php foreach ($zones as $z): ?>
+                    <option value="<?= (int)$z['zone_id'] ?>"
+                      <?= ((int)($row['zone_id'] ?? 0) === (int)$z['zone_id']) ? 'selected' : '' ?>>
+                      <?= h($z['name']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </td>
+
+              <td>
+                <label class="flag">
+                  <input type="checkbox" name="active" <?= ((int)$row['active'] ? 'checked' : '') ?>>
+                  <span class="flag-text"><?= ((int)$row['active'] ? 'Yes' : 'No') ?></span>
+                </label>
+              </td>
+              <td class="actions">
+                <button name="update" value="1" class="btn sm">Save</button>
+                </form>
+
+                <form method="post" onsubmit="return confirm('Are you sure?');" class="inline-form">
+                  <?= function_exists('csrf_field') ? csrf_field() : '' ?>
+                  <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
+                  <input type="hidden" name="to" value="<?= ((int)$row['active'] ? 0 : 1) ?>">
+                  <button name="toggle_active" value="1" class="btn sm ghost">
+                    <?= ((int)$row['active'] ? 'Suspend' : 'Reactivate') ?>
+                  </button>
+                </form>
+
+                <form method="post" onsubmit="return confirm('Delete this student? This cannot be undone.');" class="inline-form">
+                  <?= function_exists('csrf_field') ? csrf_field() : '' ?>
+                  <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
+                  <button name="delete" value="1" class="btn sm danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <?php endforeach; endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+</body>
+</html>
