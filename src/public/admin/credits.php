@@ -1,5 +1,7 @@
 <?php
-require_once __DIR__ . '/../../inc/init.inc.php';
+require_once dirname(__DIR__, 2) . '/inc/dbconn.inc.php';
+// now $conn is available for mysqli_query(...)
+
 
 $uid = require_login();
 if (!function_exists('is_admin') ? $uid !== 1 : !is_admin($uid)) {
