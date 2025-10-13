@@ -1,6 +1,8 @@
 <?php
-require_once dirname(__DIR__, 2) . '/inc/dbconn.inc.php';
-// now $conn is available for mysqli_query(...)
+// public/admin/dashboard.php (and other admin pages)
+require_once dirname(__DIR__, 2) . '/inc/init.inc.php';   // or auth.inc.php – wherever require_login() lives
+$uid = require_login(); // now safe to call
+
 
 
 $uid = require_login();

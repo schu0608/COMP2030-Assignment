@@ -1,5 +1,7 @@
 <?php
-require_once __DIR__ . '/../../inc/init.inc.php';
+// public/admin/dashboard.php (and other admin pages)
+require_once dirname(__DIR__, 2) . '/inc/init.inc.php';   // or auth.inc.php – wherever require_login() lives
+$uid = require_login(); // now safe to call
 
 $uid = require_login();
 if (!function_exists('is_admin') ? $uid !== 1 : !is_admin($uid)) {
