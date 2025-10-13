@@ -1,5 +1,12 @@
 <?php
 
+if (PHP_SAPI !== 'cli') {
+  ini_set('display_errors', '1');
+  ini_set('display_startup_errors', '1');
+  error_reporting(E_ALL);
+}
+
+
 if (session_status() === PHP_SESSION_NONE) {
     $sessionPath = __DIR__ . '/../.sessions';
     if (!is_dir($sessionPath)) {

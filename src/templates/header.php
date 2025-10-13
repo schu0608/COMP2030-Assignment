@@ -160,7 +160,7 @@ if ($uid) {
         </div>
       <?php else: ?>
   <a class="btn btn--ghost" href="<?= AUTH_LOGIN ?>">Log in</a>
-  <a class="btn" href="<?= AUTH_REGISTER ?>">Sign up</a>
+<a class="btn" href="<?= AUTH_REGISTER ?>">Sign up</a>
 <?php endif; ?>
     </div>
   </div>
