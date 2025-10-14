@@ -1,6 +1,12 @@
 <?php
 require_once dirname(__DIR__,2).'/inc/init.inc.php';
 require_once dirname(__DIR__,2).'/inc/session.inc.php';
+
+if (current_user_id()) {
+  $next = $_GET['next'] ?? '/index.php';
+  header('Location: ' . $next);
+  exit;
+}
 validate_csrf();
 $email = strtolower(trim($_POST['email'] ?? ''));
 $pass = $_POST['password'] ?? '';

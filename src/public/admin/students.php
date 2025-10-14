@@ -1,4 +1,8 @@
 <?php
+require_once dirname(__DIR__, 2) . '/inc/init.inc.php';
+
+$uid = require_admin();
+$pdo = db();
 require_once dirname(__DIR__, 2) . '/inc/dbconn.inc.php';   
 
 $authPath = dirname(__DIR__, 2) . '/inc/auth.inc.php';
@@ -16,6 +20,11 @@ if (!function_exists('h')) {
 if (!function_exists('field')) {
   function field(string $k, $default = null) { return $_POST[$k] ?? $default; }
 }
+
+$zones = [];
+try {
+  $zones = $pdo->query("SELECT zone_id, name FROM zones ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) { $zones = []; }
 if (!function_exists('require_login')) {
   function require_login(): int {
     if (empty($_SESSION['user_id'])) {
@@ -62,13 +71,11 @@ $msg = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
-
   $email   = trim((string) field('email', ''));
   $full    = trim((string) field('full_name', ''));
   $cred    = max(0.0, (float) field('fuss_credits', 0));
   $active  = isset($_POST['active']) ? 1 : 0;
   $zone_id = ($_POST['zone_id'] ?? '') === '' ? null : (int) $_POST['zone_id'];
-
   if ($email !== '' && $full !== '') {
     $hash = password_hash('Temp123!', PASSWORD_DEFAULT);
     $st = $pdo->prepare("
@@ -77,12 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
     ");
     try {
       $st->execute([
-        ':email'  => $email,
-        ':pass'   => $hash,
-        ':full'   => $full,
-        ':cred'   => $cred,
-        ':active' => $active,
-        ':zone'   => $zone_id
+        ':email'=>$email, ':pass'=>$hash, ':full'=>$full,
+        ':cred'=>$cred, ':active'=>$active, ':zone'=>$zone_id
       ]);
       $msg = "Created student: " . h($full);
     } catch (PDOException $e) {
@@ -95,32 +98,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
-
   $id      = (int) field('student_id', 0);
   $email   = trim((string) field('email', ''));
   $full    = trim((string) field('full_name', ''));
   $cred    = max(0.0, (float) field('fuss_credits', 0));
   $active  = isset($_POST['active']) ? 1 : 0;
   $zone_id = ($_POST['zone_id'] ?? '') === '' ? null : (int) $_POST['zone_id'];
-
   if ($id > 0 && $email !== '' && $full !== '') {
     $st = $pdo->prepare("
       UPDATE students
-         SET email = :email,
-             full_name = :full,
-             fuss_credits = :cred,
-             active = :active,
-             zone_id = :zone
-       WHERE student_id = :id
+         SET email=:email, full_name=:full, fuss_credits=:cred, active=:active, zone_id=:zone
+       WHERE student_id=:id
     ");
     try {
       $st->execute([
-        ':email'  => $email,
-        ':full'   => $full,
-        ':cred'   => $cred,
-        ':active' => $active,
-        ':zone'   => $zone_id,
-        ':id'     => $id,
+        ':email'=>$email, ':full'=>$full, ':cred'=>$cred,
+        ':active'=>$active, ':zone'=>$zone_id, ':id'=>$id
       ]);
       $msg = "Updated student #{$id}";
     } catch (PDOException $e) {
@@ -133,12 +126,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_active'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
-
   $id = (int) field('student_id', 0);
   $to = (int) field('to', 0);
   if ($id > 0) {
-    $st = $pdo->prepare("UPDATE students SET active = :a WHERE student_id = :id");
-    $ok = $st->execute([':a' => $to, ':id' => $id]);
+    $st = $pdo->prepare("UPDATE students SET active=:a WHERE student_id=:id");
+    $ok = $st->execute([':a'=>$to, ':id'=>$id]);
     $msg = $ok ? (($to ? 'Reactivated' : 'Suspended') . " student #{$id}") : "Toggle failed.";
   } else {
     $msg = "Invalid student id.";
@@ -147,12 +139,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_active'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
-
   $id = (int) field('student_id', 0);
   if ($id > 0) {
-    $st = $pdo->prepare("DELETE FROM students WHERE student_id = :id");
+    $st = $pdo->prepare("DELETE FROM students WHERE student_id=:id");
     try {
-      $ok = $st->execute([':id' => $id]);
+      $ok = $st->execute([':id'=>$id]);
       $msg = $ok ? "Deleted student #{$id}" : "Delete failed.";
     } catch (PDOException $e) {
       $msg = "Delete failed: " . h($e->getMessage());
@@ -168,9 +159,7 @@ try {
     FROM students
     ORDER BY student_id ASC
   ")->fetchAll(PDO::FETCH_ASSOC);
-} catch (Throwable $e) {
-  $rows = [];
-}
+} catch (Throwable $e) { $rows = []; }
 ?>
 <!doctype html>
 <html>
@@ -178,48 +167,22 @@ try {
   <meta charset="utf-8">
   <title>Admin • Students</title>
   <style>
-    :root{
-      --bg:#0f172a; --card:#111827; --mut:#94a3b8; --text:#e5e7eb;
-      --accent:#FFCC00; --ring:#1f2937; --border:#1f2937; --danger:#ef4444;
-    }
-    *{box-sizing:border-box}
-    body{margin:0; padding:32px; background:linear-gradient(180deg,#0b1220,#0f172a); color:var(--text); font-family:system-ui,Segoe UI,Arial,sans-serif}
-    .container{max-width:1100px; margin:0 auto}
-    header{margin-bottom:12px}
-    h1{margin:0 0 6px}
-    .sub{color:var(--mut); margin:6px 0}
-    a{color:#cbd5e1; text-decoration:none}
-    a:hover{text-decoration:underline}
-
-    .card{background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.25); margin-bottom:16px}
-    .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-
-    input, select{
-      padding:10px; border-radius:10px; border:1px solid var(--border);
-      background:#0f172a; color:#e5e7eb;
-    }
-    .in-cell{width:100%}
-    .in-cell.wide{min-width:260px}
-    .in-cell.short{width:120px}
-
-    .btn{padding:10px 14px; border-radius:10px; border:1px solid var(--ring); background:#111827; color:#e5e7eb; cursor:pointer}
-    .btn:hover{background:#0f172a}
-    .btn.sm{padding:6px 10px; font-size:.9rem}
-    .btn.danger{background:var(--danger); border-color:#b91c1c; color:#0b1220}
-    .btn.danger:hover{background:#dc2626}
-    .btn.ghost{background:#0f172a}
-
-    .msg{background:#0b2130; border:1px solid #1f3a4d; color:#dbeafe; padding:10px 12px; border-radius:10px; margin-bottom:12px}
-
-    .table-wrap{overflow:auto}
-    table{border-collapse:collapse; width:100%}
-    th,td{padding:10px 12px; border-bottom:1px solid var(--ring); text-align:left; vertical-align:top}
-    thead th{color:#cbd5e1; font-weight:700}
-    .empty{color:#94a3b8; text-align:center}
-    .actions{display:flex; gap:8px}
-    td form{margin:0}
-    .flag{display:flex; align-items:center; gap:8px}
-    .flag-text{color:#cbd5e1}
+    :root{--bg:#0f172a;--card:#111827;--mut:#94a3b8;--text:#e5e7eb;--accent:#FFCC00;--ring:#1f2937;--border:#1f2937;--danger:#ef4444}
+    *{box-sizing:border-box}body{margin:0;padding:32px;background:linear-gradient(180deg,#0b1220,#0f172a);color:var(--text);font-family:system-ui,Segoe UI,Arial,sans-serif}
+    .container{max-width:1100px;margin:0 auto}header{margin-bottom:12px}h1{margin:0 0 6px}.sub{color:var(--mut);margin:6px 0}
+    a{color:#cbd5e1;text-decoration:none}a:hover{text-decoration:underline}
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);margin-bottom:16px}
+    .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    input,select{padding:10px;border-radius:10px;border:1px solid var(--border);background:#0f172a;color:#e5e7eb}
+    .in-cell{width:100%}.in-cell.wide{min-width:260px}.in-cell.short{width:120px}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--ring);background:#111827;color:#e5e7eb;cursor:pointer}
+    .btn:hover{background:#0f172a}.btn.sm{padding:6px 10px;font-size:.9rem}.btn.danger{background:var(--danger);border-color:#b91c1c;color:#0b1220}
+    .btn.danger:hover{background:#dc2626}.btn.ghost{background:#0f172a}
+    .msg{background:#0b2130;border:1px solid #1f3a4d;color:#dbeafe;padding:10px 12px;border-radius:10px;margin-bottom:12px}
+    .table-wrap{overflow:auto}table{border-collapse:collapse;width:100%}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--ring);text-align:left;vertical-align:top}
+    thead th{color:#cbd5e1;font-weight:700}.empty{color:#94a3b8;text-align:center}.actions{display:flex;gap:8px}td form{margin:0}
+    .flag{display:flex;align-items:center;gap:8px}.flag-text{color:#cbd5e1}
   </style>
 </head>
 <body class="admin">
@@ -279,19 +242,14 @@ try {
               </td>
               <td><input type="email" name="email" value="<?= h($row['email']) ?>" class="in-cell wide"></td>
               <td><input type="number" step="0.01" min="0" name="fuss_credits" value="<?= (float)$row['fuss_credits'] ?>" class="in-cell short"></td>
-
               <td>
                 <select name="zone_id" class="in-cell">
                   <option value="">—</option>
                   <?php foreach ($zones as $z): ?>
-                    <option value="<?= (int)$z['zone_id'] ?>"
-                      <?= ((int)($row['zone_id'] ?? 0) === (int)$z['zone_id']) ? 'selected' : '' ?>>
-                      <?= h($z['name']) ?>
-                    </option>
+                    <option value="<?= (int)$z['zone_id'] ?>" <?= ((int)($row['zone_id'] ?? 0) === (int)$z['zone_id']) ? 'selected' : '' ?>><?= h($z['name']) ?></option>
                   <?php endforeach; ?>
                 </select>
               </td>
-
               <td>
                 <label class="flag">
                   <input type="checkbox" name="active" <?= ((int)$row['active'] ? 'checked' : '') ?>>
@@ -301,16 +259,12 @@ try {
               <td class="actions">
                 <button name="update" value="1" class="btn sm">Save</button>
                 </form>
-
                 <form method="post" onsubmit="return confirm('Are you sure?');" class="inline-form">
                   <?= function_exists('csrf_field') ? csrf_field() : '' ?>
                   <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">
                   <input type="hidden" name="to" value="<?= ((int)$row['active'] ? 0 : 1) ?>">
-                  <button name="toggle_active" value="1" class="btn sm ghost">
-                    <?= ((int)$row['active'] ? 'Suspend' : 'Reactivate') ?>
-                  </button>
+                  <button name="toggle_active" value="1" class="btn sm ghost"><?= ((int)$row['active'] ? 'Suspend' : 'Reactivate') ?></button>
                 </form>
-
                 <form method="post" onsubmit="return confirm('Delete this student? This cannot be undone.');" class="inline-form">
                   <?= function_exists('csrf_field') ? csrf_field() : '' ?>
                   <input type="hidden" name="student_id" value="<?= (int)$row['student_id'] ?>">

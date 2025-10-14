@@ -1,4 +1,9 @@
 <?php
+// ===== bootstrap =====
+require_once dirname(__DIR__).'/inc/init.inc.php';
+require_once dirname(__DIR__).'/inc/auth.inc.php';
+
+$uid = current_user_id();
 $ROOT = dirname(__DIR__);
 $INIT = $ROOT . '/inc/init.inc.php';
 $AUTH = $ROOT . '/inc/auth.inc.php';
