@@ -28,7 +28,6 @@ if (in_array((string)$t['status'], $terminal, true)) {
   $pdo->rollBack(); redirect('/thread.php?id='.$tid.'&e=locked');
 }
 
-// set proposed_hours & move to proposed
 $upd = $pdo->prepare('UPDATE transactions SET proposed_hours=?, status="proposed" WHERE transaction_id=?');
 $upd->execute([$hours, $tid]);
 

@@ -4,7 +4,6 @@ require_once dirname(__DIR__).'/inc/init.inc.php';
 $offer_id = (int)($_GET['id'] ?? 0);
 if ($offer_id <= 0) { http_response_code(400); echo 'Bad request'; exit; }
 
-/* Load the offered skill */
 $sql = 'SELECT
           ss.id            AS offer_id,
           s.skill_id       AS skill_id,
@@ -29,7 +28,6 @@ $uid      = current_user_id();
 $self     = $uid && $uid === (int)$row['provider_id'];
 $pageTitle= $row['skill_name'] ?? 'Skill';
 
-/* Check if this user already has an *open* request for this provider+skill */
 $open = null;
 if ($uid && !$self) {
   $openSt = db()->prepare(
@@ -46,11 +44,9 @@ if ($uid && !$self) {
   $open = $openSt->fetch();
 }
 
-/* Optional banner on return */
 $ok       = (string)($_GET['ok'] ?? '');
 $threadId = isset($_GET['tid']) ? (int)$_GET['tid'] : null;
 
-/* Current credit balance (for hint only) */
 $myCredits = null;
 if ($uid) {
   $myCredits = db()->query('SELECT fuss_credits FROM students WHERE student_id='.(int)$uid)->fetchColumn();

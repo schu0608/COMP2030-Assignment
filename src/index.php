@@ -4,7 +4,6 @@ require_once "./inc/dbconn.inc.php";
 
 echo "<h1>COMP2030 Assignment Dev Environment Setup</h1><h2>Connected successfully to MySQL database!</h2>";
 
-// Create a table if it doesn't exist
 $sql = "CREATE TABLE IF NOT EXISTS messages (
     id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     message VARCHAR(255) NOT NULL,
@@ -17,7 +16,6 @@ if ($conn->query($sql) === TRUE) {
     echo "<p>Error creating table: " . $conn->error . "</p>";
 }
 
-// Insert some data (only if table is empty for demonstration)
 $check_empty = $conn->query("SELECT COUNT(*) as count FROM messages");
 $row = $check_empty->fetch_assoc();
 if ($row['count'] == 0) {
@@ -29,7 +27,6 @@ if ($row['count'] == 0) {
     }
 }
 
-// Display messages
 $result = $conn->query("SELECT id, message, reg_date FROM messages");
 
 if ($result->num_rows > 0) {

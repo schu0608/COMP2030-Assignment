@@ -1,12 +1,12 @@
 :root{
-  --bg:#0f172a;        /* slate-900 */
-  --card:#111827;      /* gray-900 */
-  --mut:#94a3b8;       /* slate-400 */
-  --text:#e5e7eb;      /* gray-200 */
-  --accent:#8b5cf6;    /* violet-500 */
-  --accent-2:#22c55e;  /* green-500 */
-  --accent-3:#f59e0b;  /* amber-500 */
-  --ring:#1f2937;      /* gray-800 */
+  --bg:#0f172a;      
+  --card:#111827;    
+  --mut:#94a3b8;       
+  --text:#e5e7eb;     
+  --accent:#8b5cf6;    
+  --accent-2:#22c55e; 
+  --accent-3:#f59e0b; 
+  --ring:#1f2937;      
   --chip:#1f2937;
 }
 *{box-sizing:border-box}
@@ -40,7 +40,6 @@ h1{margin:0;font-size:28px;letter-spacing:.3px}
   .stat{grid-column:span 12}
   .actions{grid-template-columns: repeat(2, 1fr)}
 }
-/* --- Students page polish --- */
 .table-wrap{width:100%; overflow:auto}
 table.compact th, table.compact td{padding:8px 10px}
 table.zebra tbody tr:nth-child(odd){background:#0e1529}
@@ -58,7 +57,7 @@ table.zebra thead th{position:sticky; top:0; z-index:1}
 .btn.ghost{background:transparent;color:#e5e7eb;border:1px solid var(--ring)}
 .btn.danger{background:#4b1d1d;border-color:#7f1d1d}
 .btn.danger:hover{background:#7f1d1d}
-/* Tables & forms polish shared by admin pages */
+
 .table-wrap{width:100%; overflow:auto}
 table.compact th, table.compact td{padding:8px 10px}
 table.zebra tbody tr:nth-child(odd){background:#0e1529}

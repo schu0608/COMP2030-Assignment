@@ -1,5 +1,4 @@
 <?php
-// ===== bootstrap =====
 $ROOT = dirname(__DIR__);
 $INIT = $ROOT . '/inc/init.inc.php';
 $AUTH = $ROOT . '/inc/auth.inc.php';
@@ -7,7 +6,6 @@ $AUTH = $ROOT . '/inc/auth.inc.php';
 if (file_exists($INIT))  require_once $INIT;
 if (file_exists($AUTH))  require_once $AUTH;
 
-// Fallbacks if project doesn't define these already
 if (!function_exists('h')) {
   function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 }
@@ -16,14 +14,11 @@ if (!function_exists('current_user_id')) {
   function current_user_id(): int { return (int)($_SESSION['user_id'] ?? 0); }
 }
 if (!function_exists('db')) {
-  // If your project always defines db() in init.inc.php, this won't run.
-  // Add a minimal fallback here only if you really need it.
   function db(): PDO {
     throw new RuntimeException('db() not available; include init.inc.php.');
   }
 }
 
-// ===== local helpers =====
 function nav_active(string $file): string {
   $path = $_SERVER['SCRIPT_NAME'] ?? '';
   return (substr($path, -strlen($file)) === $file) ? 'active' : '';
@@ -46,25 +41,21 @@ function _db_has_column(PDO $pdo, string $table, string $col): bool {
   } catch (Throwable $e) { return false; }
 }
 
-// ===== page title =====
 $pageTitle = $pageTitle ?? '';
 
-// ===== user + badges =====
 $authName = null;
-$badgeReq = 0; // not rendered (kept for future)
-$badgePM  = 0; // shown on Messages tab
+$badgeReq = 0; 
+$badgePM  = 0;
 
 $uid = (int) current_user_id();
 if ($uid) {
   try {
     $pdo = db();
 
-    // name
     $st = $pdo->prepare('SELECT full_name FROM students WHERE student_id=?');
     $st->execute([$uid]);
     $authName = $st->fetchColumn() ?: null;
 
-    // requests unread (not displayed now)
     if (_db_has_table($pdo, 'messages') && _db_has_table($pdo, 'transactions')) {
       $hasReads = _db_has_table($pdo, 'message_reads') && _db_has_column($pdo, 'message_reads', 'last_seen_at');
       if ($hasReads) {
@@ -89,7 +80,6 @@ if ($uid) {
       $badgeReq = (int)($q->fetchColumn() ?: 0);
     }
 
-    // PM unread (badge shown on Messages)
     if (_db_has_table($pdo, 'pm_threads') && _db_has_table($pdo, 'pm_messages')) {
       $hasPMReads = _db_has_table($pdo, 'pm_reads') && _db_has_column($pdo, 'pm_reads', 'last_seen_at');
       if ($hasPMReads) {
@@ -114,7 +104,6 @@ if ($uid) {
       $badgePM = (int)($q->fetchColumn() ?: 0);
     }
   } catch (Throwable $e) {
-    // fail quietly in header
   }
 }
 ?>

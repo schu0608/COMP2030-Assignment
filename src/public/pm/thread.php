@@ -1,5 +1,4 @@
 <?php
-// /src/public/pm/thread.php
 $ROOT = dirname(__DIR__, 2);
 require_once $ROOT . '/inc/init.inc.php';
 
@@ -9,7 +8,6 @@ $pdo = db();
 $cid = (int)($_GET['id'] ?? 0);
 if ($cid <= 0) { http_response_code(404); exit('Conversation not found'); }
 
-/* Load conversation + other user */
 $st = $pdo->prepare("
   SELECT c.conversation_id, c.a_id, c.b_id,
          CASE WHEN c.a_id=? THEN c.b_id ELSE c.a_id END AS other_id,
@@ -28,24 +26,20 @@ if ($uid !== (int)$conv['a_id'] && $uid !== (int)$conv['b_id']) {
 
 $pageTitle = $conv['other_name'];
 
-/* Mark other's unread messages as read */
 $pdo->prepare("UPDATE pm_messages SET read_at=NOW() WHERE conversation_id=? AND sender_id<>? AND read_at IS NULL")
     ->execute([$cid, $uid]);
 
-/* POST: send message */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send'])) {
   validate_csrf();
   $body = trim((string)($_POST['body'] ?? ''));
   if ($body !== '') {
     $pdo->prepare("INSERT INTO pm_messages (conversation_id, sender_id, body) VALUES (?,?,?)")
         ->execute([$cid, $uid, $body]);
-    // bump conversation updated_at implicitly via trigger? If not, do a tiny update:
     $pdo->prepare("UPDATE conversations SET updated_at=updated_at WHERE conversation_id=?")->execute([$cid]);
   }
   redirect("/pm/thread.php?id={$cid}");
 }
 
-/* Fetch messages */
 $ms = $pdo->prepare("
   SELECT m.id, m.sender_id, m.body, m.created_at, m.read_at,
          u.full_name

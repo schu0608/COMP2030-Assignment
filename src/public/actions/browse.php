@@ -1,7 +1,6 @@
 <?php
 require_once dirname(__DIR__,2).'/inc/init.inc.php';
 
-/** Force a clean JSON response (no stray whitespace/notices) */
 @ini_set('display_errors', '0');
 while (ob_get_level()) { ob_end_clean(); }
 header('Content-Type: application/json; charset=utf-8');
@@ -26,7 +25,6 @@ try {
       JOIN skills   s  ON s.skill_id    = ss.skill_id
       JOIN students st ON st.student_id = ss.student_id ';
 
-  // ---- Offered (try with ratings; fallback if `reviews` missing) ----
   $sqlOffWithRatings =
       'SELECT
          ss.id AS offer_id, s.skill_id, s.name, s.category, s.description AS skill_desc,
@@ -43,10 +41,10 @@ try {
     $st->execute($params);
     $offered = $st->fetchAll();
   } catch (PDOException $e) {
-    if ($e->getCode() !== '42S02') { // not “table/view not found”
+    if ($e->getCode() !== '42S02') { 
       throw $e;
     }
-    // fallback without ratings
+   
     $sqlOffNoRatings =
         'SELECT
            ss.id AS offer_id, s.skill_id, s.name, s.category, s.description AS skill_desc,
@@ -58,7 +56,6 @@ try {
     $offered = $st->fetchAll();
   }
 
-  // ---- Requested (simple) ----
   $sqlReq =
       'SELECT
          ss.id AS request_id, s.skill_id, s.name, s.category, s.description AS skill_desc,
@@ -72,7 +69,7 @@ try {
   exit;
 
 } catch (Throwable $e) {
-  http_response_code(200); // still return 200 so fetch can parse JSON
+  http_response_code(200); 
   echo json_encode(['error' => true, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
   exit;
 }

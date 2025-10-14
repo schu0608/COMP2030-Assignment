@@ -8,8 +8,6 @@ $year = (int)($_POST['academic_year'] ?? 0);
 $bio = trim($_POST['bio'] ?? '');
 $avatarPath = null;
 
-
-// Optional avatar upload (to /uploads)
 if (!empty($_FILES['avatar']['name']) && is_uploaded_file($_FILES['avatar']['tmp_name'])) {
 $f = $_FILES['avatar'];
 if ($f['error'] === UPLOAD_ERR_OK) {

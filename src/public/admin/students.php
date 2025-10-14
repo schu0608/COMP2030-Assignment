@@ -1,19 +1,15 @@
 <?php
-// --- includes ---------------------------------------------------------------
-require_once dirname(__DIR__, 2) . '/inc/dbconn.inc.php';   // provides db(): PDO
+require_once dirname(__DIR__, 2) . '/inc/dbconn.inc.php';   
 
-// Try to load real auth helpers if present
 $authPath = dirname(__DIR__, 2) . '/inc/auth.inc.php';
 if (file_exists($authPath)) {
   require_once $authPath;
 }
 
-// Ensure session for any fallback auth
 if (session_status() !== PHP_SESSION_ACTIVE) {
   session_start();
 }
 
-// Minimal helpers if your project doesn't already define them
 if (!function_exists('h')) {
   function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 }
@@ -32,7 +28,6 @@ if (!function_exists('require_login')) {
 if (!function_exists('require_admin')) {
   function require_admin(): int {
     $uid = require_login();
-    // TEMP: treat user_id=1 or explicit flag as admin
     if ($uid !== 1 && empty($_SESSION['is_admin'])) {
       http_response_code(403);
       echo 'Forbidden: admin only.';
@@ -42,14 +37,12 @@ if (!function_exists('require_admin')) {
   }
 }
 
-// --- auth gate --------------------------------------------------------------
 $pdo = db();
 if (function_exists('require_admin')) {
   $uid = require_admin();
 } elseif (function_exists('require_login')) {
   $uid = require_login();
 } else {
-  // last resort (shouldn’t happen because we defined fallbacks above)
   $uid = (int)($_SESSION['user_id'] ?? 0);
   if (!$uid) {
     http_response_code(403);
@@ -57,19 +50,16 @@ if (function_exists('require_admin')) {
   }
 }
 
-// --- load zones for dropdown ------------------------------------------------
 $zones = [];
 try {
   $zones = $pdo->query("SELECT zone_id, name FROM zones ORDER BY name")
                ->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
-  $zones = []; // safe default; page will still render
+  $zones = [];
 }
 
-// --- actions ---------------------------------------------------------------
 $msg = "";
 
-// CREATE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
@@ -80,7 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
   $zone_id = ($_POST['zone_id'] ?? '') === '' ? null : (int) $_POST['zone_id'];
 
   if ($email !== '' && $full !== '') {
-    // temporary password; user should reset later
     $hash = password_hash('Temp123!', PASSWORD_DEFAULT);
     $st = $pdo->prepare("
       INSERT INTO students (email, password, full_name, fuss_credits, active, zone_id)
@@ -104,7 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
   }
 }
 
-// UPDATE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
@@ -143,7 +131,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
   }
 }
 
-// TOGGLE ACTIVE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_active'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
@@ -158,7 +145,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_active'])) {
   }
 }
 
-// DELETE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
@@ -176,7 +162,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) {
   }
 }
 
-// --- fetch table data -------------------------------------------------------
 try {
   $rows = $pdo->query("
     SELECT student_id, full_name, email, fuss_credits, active, zone_id
@@ -247,7 +232,6 @@ try {
 
   <?php if ($msg): ?><div class="msg"><?= h($msg) ?></div><?php endif; ?>
 
-  <!-- Add student -->
   <section class="card">
     <form method="post" class="bar">
       <?= function_exists('csrf_field') ? csrf_field() : '' ?>
@@ -267,7 +251,6 @@ try {
     <p class="sub" style="margin-top:6px">New accounts are created with a temporary password (<code>Temp123!</code>). Ask users to reset their password after first login.</p>
   </section>
 
-  <!-- Table -->
   <section class="card">
     <div class="table-wrap">
       <table class="zebra compact">

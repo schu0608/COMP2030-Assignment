@@ -10,7 +10,6 @@ $body = trim($_POST['body'] ?? '');
 
 if ($tid <= 0 || $body === '') redirect('/messages.php?e=invalid');
 
-// Check membership + status
 $st = db()->prepare('SELECT requester_id, provider_id, status FROM transactions WHERE transaction_id=?');
 $st->execute([$tid]);
 $t = $st->fetch();

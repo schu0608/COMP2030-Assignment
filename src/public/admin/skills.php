@@ -1,7 +1,6 @@
 <?php
-// public/admin/dashboard.php (and other admin pages)
-require_once dirname(__DIR__, 2) . '/inc/init.inc.php';   // or auth.inc.php – wherever require_login() lives
-$uid = require_login(); // now safe to call
+require_once dirname(__DIR__, 2) . '/inc/init.inc.php'; 
+$uid = require_login();
 
 
 $uid = require_login();
@@ -13,7 +12,6 @@ if (!function_exists('is_admin') ? $uid !== 1 : !is_admin($uid)) {
 $pdo = db();
 $msg = "";
 
-/* ---- detect whether details column is `description` or `topics` ---- */
 $detailsCol = 'description';
 try {
   $stmt = $pdo->query("
@@ -28,14 +26,11 @@ try {
     $detailsCol = $row['COLUMN_NAME'];
   }
 } catch (Throwable $e) {
-  // keep default
 }
 
-/* ----------------------- POST actions ----------------------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
-  /* ADD */
   if (isset($_POST['add'])) {
     $category = trim((string)($_POST['category'] ?? ''));
     $name     = trim((string)($_POST['name'] ?? ''));
@@ -52,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 
-  /* UPDATE */
   if (isset($_POST['update'])) {
     $id       = (int)($_POST['skill_id'] ?? 0);
     $category = trim((string)($_POST['category'] ?? ''));
@@ -70,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 
-  /* DELETE */
   if (isset($_POST['delete'])) {
     $id = (int)($_POST['skill_id'] ?? 0);
     if ($id > 0) {
@@ -83,7 +76,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
-/* ----------------------- fetch skills ----------------------- */
 $rows = [];
 try {
   $sql = "SELECT skill_id, category, name, {$detailsCol} AS details
@@ -151,7 +143,6 @@ try {
 
   <?php if ($msg): ?><div class="msg"><?= h($msg) ?></div><?php endif; ?>
 
-  <!-- Add skill card -->
   <section class="card">
     <h2 style="margin:0 0 10px">Add Skill</h2>
     <form method="post" class="bar">
@@ -164,7 +155,6 @@ try {
     </form>
   </section>
 
-  <!-- Skills table card -->
   <section class="card">
     <div class="table-wrap">
       <table class="zebra compact">

@@ -1,7 +1,6 @@
 <?php
-// public/admin/dashboard.php (and other admin pages)
-require_once dirname(__DIR__, 2) . '/inc/init.inc.php';   // or auth.inc.php – wherever require_login() lives
-$uid = require_login(); // now safe to call
+require_once dirname(__DIR__, 2) . '/inc/init.inc.php';   
+$uid = require_login();
 
 
 
@@ -13,12 +12,8 @@ if (!function_exists('is_admin') ? $uid !== 1 : !is_admin($uid)) {
 
 $pdo = db();
 
-/* ---------- metrics ---------- */
-$activeStudents = (int)$pdo->query("SELECT COUNT(*) FROM students WHERE active=1")->fetchColumn();
 
-/* “Active services”: tweak this to your workflow.
-   If you use service_requests, uncomment the first line and comment the second. */
-// $activeServices = (int)$pdo->query("SELECT COUNT(*) FROM service_requests WHERE status IN ('pending','accepted','in_progress','confirm_provider','confirm_requester')")->fetchColumn();
+$activeStudents = (int)$pdo->query("SELECT COUNT(*) FROM students WHERE active=1")->fetchColumn();
 $activeServices = (int)$pdo->query("SELECT COUNT(*) FROM transactions WHERE status IN ('pending','accepted','proposed','confirm_provider','confirm_requester')")->fetchColumn();
 
 $avgCredits = (float)$pdo->query("SELECT ROUND(AVG(fuss_credits),2) FROM students")->fetchColumn() ?: 0.0;
@@ -42,14 +37,14 @@ foreach ($pdo->query($sql) as $row) $popular[] = $row['name'];
   <title>Admin • Dashboard</title>
   <style>
     :root{
-      --bg:#0f172a;        /* slate-900 */
-      --card:#111827;      /* gray-900 */
-      --mut:#94a3b8;       /* slate-400 */
-      --text:#e5e7eb;      /* gray-200 */
-      --accent:#FFCC00;    /* Flinders gold */
-      --accent-2:#22c55e;  /* green-500 */
-      --accent-3:#60a5fa;  /* blue-400 */
-      --ring:#1f2937;      /* gray-800 */
+      --bg:#0f172a;       
+      --card:#111827;     
+      --mut:#94a3b8;       
+      --text:#e5e7eb;      
+      --accent:#FFCC00;    
+      --accent-2:#22c55e;  
+      --accent-3:#60a5fa;  
+      --ring:#1f2937;      
       --chip:#1f2937;
     }
     *{box-sizing:border-box}

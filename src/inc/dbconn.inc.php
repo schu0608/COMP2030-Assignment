@@ -1,7 +1,4 @@
 <?php
-// Hard-wire to fussdb to avoid env mismatches
-
-
 declare(strict_types=1);
 
 

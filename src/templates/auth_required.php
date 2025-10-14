@@ -1,6 +1,4 @@
 <?php
-// src/templates/auth_required.php
-// Expect: $GLOBALS['_auth_required_next'] optionally set by require_login()
 $ROOT = dirname(__DIR__);
 
 $pageTitle = 'Sign in required';
