@@ -26,3 +26,4 @@ require_once __DIR__ . '/auth.inc.php';
 if (!defined('APP_ROOT')) {
   define('APP_ROOT', dirname(__DIR__)); 
 }
+ 
