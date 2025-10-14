@@ -1,6 +1,10 @@
 <?php
-// --- includes ---------------------------------------------------------------
-require_once dirname(__DIR__, 2) . '/inc/dbconn.inc.php';   // provides db(): PDO
+
+require_once dirname(__DIR__, 2) . '/inc/init.inc.php';
+require_once dirname(__DIR__, 2) . '/inc/auth.inc.php';
+
+$uid = require_admin(); 
+$pdo = db();
 
 // Try to load real auth helpers if present
 $authPath = dirname(__DIR__, 2) . '/inc/auth.inc.php';
