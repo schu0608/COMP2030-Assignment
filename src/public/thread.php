@@ -1,5 +1,4 @@
 <?php
-// src/public/thread.php
 $ROOT = dirname(__DIR__);
 require_once $ROOT . '/inc/init.inc.php';
 
@@ -30,7 +29,7 @@ function find_open_tx(PDO $pdo, int $me, int $provider, int $skill): ?int {
 }
 
 function create_tx(PDO $pdo, int $me, int $provider, int $skill): int {
-  $hours = 1.0; // default; adjust if you use different initial hours/credits
+  $hours = 1.0;
   $st = $pdo->prepare("
     INSERT INTO transactions (requester_id, provider_id, skill_id, hours, fuss_credit_amount, status)
     VALUES (:me, :prov, :skill, :hrs, :hrs, 'pending')
@@ -39,7 +38,6 @@ function create_tx(PDO $pdo, int $me, int $provider, int $skill): int {
   return (int)$pdo->lastInsertId();
 }
 
-// accept either id OR provider+skill
 $tid = (int)($_GET['id'] ?? 0);
 if ($tid <= 0) {
   $provider = (int)($_GET['provider'] ?? 0);
@@ -57,13 +55,9 @@ if ($tid <= 0) {
     go("/thread.php?id=".$newId);
   }
 
-  // neither id nor provider+skill provided
   http_response_code(404); exit('Thread not found');
 }
 
-
-
-/** ---------- helpers ---------- */
 function db_has_column(PDO $pdo, string $table, string $col): bool {
   $q = $pdo->prepare(
     "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
@@ -88,7 +82,6 @@ $hasProp      = db_has_column($pdo, 'transactions', 'proposed_hours');
 $hasReviewsT  = db_has_table($pdo, 'reviews');
 $hasReadsT    = db_has_table($pdo, 'message_reads');
 
-/** ---------- load transaction header ---------- */
 $fieldList = "t.transaction_id,t.requester_id,t.provider_id,t.skill_id,
               t.hours,t.fuss_credit_amount,t.status";
 if ($hasProp) { $fieldList .= ",t.proposed_hours"; }
@@ -109,23 +102,19 @@ $st->execute([$tid]);
 $tx = $st->fetch();
 if (!$tx) { http_response_code(404); exit('Thread not found'); }
 
-// permissions
 if ($uid !== (int)$tx['requester_id'] && $uid !== (int)$tx['provider_id']) {
   http_response_code(403); exit('Not allowed');
 }
 $isRequester = ($uid === (int)$tx['requester_id']);
 $isProvider  = ($uid === (int)$tx['provider_id']);
 
-/** ---------- unread tracking: get last seen, then mark now ---------- */
 $lastSeen = '1970-01-01 00:00:00';
 if ($hasReadsT) {
-  // read previous last_seen_at
   $q = $pdo->prepare('SELECT last_seen_at FROM message_reads WHERE user_id=? AND transaction_id=?');
   $q->execute([$uid, $tid]);
   $v = $q->fetchColumn();
   if ($v) $lastSeen = (string)$v;
 
-  // upsert current seen time to NOW() so nav badge clears
   $up = $pdo->prepare("
     INSERT INTO message_reads (user_id, transaction_id, last_seen_at)
     VALUES (?, ?, NOW())
@@ -134,11 +123,9 @@ if ($hasReadsT) {
   $up->execute([$uid, $tid]);
 }
 
-/** ---------- actions: send / propose (confirm handled by actions/service_confirm.php) ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   validate_csrf();
 
-  // Send message
   if (isset($_POST['send'], $_POST['body'])) {
     $body = trim((string)$_POST['body']);
     if ($body !== '') {
@@ -151,7 +138,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect("/thread.php?id=$tid");
   }
 
-  // Propose alternative hours (if supported)
   if ($hasProp && isset($_POST['propose'], $_POST['hours'])) {
     $ph = max(0.5, min(10.0, (float)$_POST['hours']));
     $pdo->beginTransaction();
@@ -169,7 +155,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
-/** ---------- load conversation ---------- */
 $msgs = $pdo->prepare(
   "SELECT m.id, m.sender_id, m.body, m.type, m.created_at,
           s.full_name
@@ -183,7 +168,6 @@ $messages = $msgs->fetchAll();
 
 $proposed = $hasProp ? ($tx['proposed_hours'] ?? null) : null;
 
-/** ---------- review prompt state ---------- */
 $canReview = false;
 $alreadyReviewed = false;
 if ($hasReviewsT && $uid) {
@@ -193,10 +177,9 @@ if ($hasReviewsT && $uid) {
 
   $ask = ($_GET['review'] ?? '') === '1';
   if ($tx['status'] === 'confirmed' && !$alreadyReviewed) $canReview = true;
-  if ($ask && !$alreadyReviewed) $canReview = true; // force display on redirect
+  if ($ask && !$alreadyReviewed) $canReview = true; 
 }
 
-/** ---------- page ---------- */
 $pageTitle = $tx['skill_name'];
 include $ROOT . '/templates/header.php';
 ?>
@@ -238,7 +221,6 @@ include $ROOT . '/templates/header.php';
 <?php if ($tx['status'] === 'confirmed'): ?>
   <div class="notice">This request is completed and locked.</div>
 <?php else: ?>
-  <!-- send message -->
   <form method="post" class="grid" style="margin-top:12px">
     <?= csrf_field() ?>
     <input type="text" name="body" placeholder="Write a message…" required>
@@ -254,7 +236,6 @@ include $ROOT . '/templates/header.php';
     </form>
   <?php endif; ?>
 
-  <!-- final confirmation (credits move happens in actions/service_confirm.php) -->
   <h2 style="margin-top:24px">Confirm completion</h2>
   <form method="post" action="/actions/service_confirm.php" class="grid grid--2">
     <?= csrf_field() ?>
@@ -265,7 +246,6 @@ include $ROOT . '/templates/header.php';
 <?php endif; ?>
 
 <?php
-/* -------------------------- Review Prompt -------------------------- */
 if ($hasReviewsT):
   if ($canReview): ?>
     <section class="card" id="review" style="margin-top:24px">

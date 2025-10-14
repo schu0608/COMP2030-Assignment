@@ -1,14 +1,11 @@
 <?php
 require_once dirname(__DIR__).'/inc/init.inc.php';
 $uid = require_login();
-// Only allow editing own profile
 $q = db()->prepare('SELECT * FROM students WHERE student_id=?');
 $q->execute([$uid]);
 $me = $q->fetch();
 if(!$me){ http_response_code(404); echo 'Profile not found'; exit; }
 
-
-// Fetch offered & requested skills
 $off = db()->prepare('SELECT ss.id, s.name, s.category FROM student_skills ss JOIN skills s ON s.skill_id=ss.skill_id WHERE ss.student_id=? AND ss.role="offered" ORDER BY ss.id DESC');
 $off->execute([$uid]);
 $offered = $off->fetchAll();

@@ -10,7 +10,6 @@ if ($request_id <= 0 || $hours <= 0) {
   redirect('/browse.php?e=params');
 }
 
-/* Resolve requester + skill from the requested row */
 $st = db()->prepare('SELECT ss.student_id AS requester_id, ss.skill_id
                        FROM student_skills ss
                       WHERE ss.id = ? AND ss.role = "requested"');
@@ -23,10 +22,9 @@ $requester_id = (int)$row['requester_id'];
 $skill_id     = (int)$row['skill_id'];
 
 if ($requester_id === $uid) {
-  redirect('/browse.php?e=self'); // can’t offer to yourself
+  redirect('/browse.php?e=self');
 }
 
-/* Prevent duplicate open threads between same requester/provider/skill */
 $chk = db()->prepare('SELECT transaction_id
                         FROM transactions
                        WHERE requester_id=? AND provider_id=? AND skill_id=?
@@ -38,7 +36,6 @@ if ($existing) {
   redirect('/thread.php?id='.$existing);
 }
 
-/* Create transaction (pending) + seed a system message */
 $pdo = db();
 $pdo->beginTransaction();
 

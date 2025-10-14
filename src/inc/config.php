@@ -8,5 +8,5 @@ $CONFIG = [
   'email_domain' => 'flinders.edu.au',
   'uploads_dir' => __DIR__ . '/../public/uploads',
   'uploads_url' => '/uploads',
-  'max_upload_bytes' => 2 * 1024 * 1024, // 2MB
+  'max_upload_bytes' => 2 * 1024 * 1024,
 ];

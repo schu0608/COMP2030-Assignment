@@ -1,14 +1,11 @@
 <?php
-// src/public/profile_zone.php
 $ROOT = dirname(__DIR__);
-require_once $ROOT . '/inc/init.inc.php'; // must define db(), require_login(), h(), csrf_field()
+require_once $ROOT . '/inc/init.inc.php';
 $pdo = db();
 $uid = require_login();
 
-// Load list of zones
 $zones = $pdo->query("SELECT zone_id, name FROM zones ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
-// Handle POST
 $msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   validate_csrf();
@@ -18,7 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $msg = 'Zone updated.';
 }
 
-// Get my current zone
 $me = $pdo->prepare("SELECT full_name, zone_id FROM students WHERE student_id=:id");
 $me->execute([':id' => $uid]);
 $me = $me->fetch(PDO::FETCH_ASSOC);

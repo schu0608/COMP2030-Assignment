@@ -5,7 +5,6 @@ include dirname(__DIR__).'/templates/header.php';
 <h1>Find skills</h1>
 
 <div class="browse-layout">
-  <!-- LEFT FILTERS -->
   <aside class="filter-card">
     <h3>Keywords</h3>
     <div id="active-chips" class="chips"></div>
@@ -41,7 +40,6 @@ include dirname(__DIR__).'/templates/header.php';
     </form>
   </aside>
 
-  <!-- RIGHT CONTENT -->
   <section class="results-col">
     <div class="toolbar">
       <div class="toolbar-left">

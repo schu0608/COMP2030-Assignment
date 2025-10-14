@@ -1,15 +1,7 @@
-/* ==========================================================================
-   FUSS — Frontend JS (vanilla)
-   - Header credits
-   - Browse filters/results
-   - Category thumbnails for cards
-   ========================================================================== */
-
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (m) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
 
-/* ---------- Category → image mapping ------------------------------------ */
 const CAT_IMAGES = {
   "academic help": "/assets/cat/academic.svg",
   "tech support":   "/assets/cat/tech.svg",
@@ -22,7 +14,6 @@ function thumbFor(category) {
   return CAT_IMAGES[key] || DEFAULT_IMAGE;
 }
 
-/* ---------- Header: credit balance -------------------------------------- */
 (async function updateHeaderCredits() {
   const el = $("#nav-credit-balance");
   if (!el) return;
@@ -31,10 +22,9 @@ function thumbFor(category) {
     if (!r.ok) throw new Error("Bad status");
     const j = await r.json();
     if (typeof j.balance !== "undefined") el.textContent = j.balance;
-  } catch { /* leave as — */ }
+  } catch {  }
 })();
 
-/* ---------- Browse page -------------------------------------------------- */
 (function browseModule() {
   const form           = $("#browse-form");
   const chips          = $("#active-chips");
@@ -91,7 +81,6 @@ function thumbFor(category) {
     return "★★★★★☆☆☆☆☆".slice(5 - full, 10 - full);
   };
 
-  /* UPDATED: adds inline background-image via thumbFor(category) */
   const offeredCard = (r) => `
     <a class="skill-card" href="/skill.php?id=${r.offer_id}">
       <div class="thumb" style="background-image:url('${thumbFor(r.category)}');"></div>
@@ -165,7 +154,6 @@ function thumbFor(category) {
   runSearch();
 })();
 
-/* ---------- Decorate any server-rendered cards (homepage etc.) ----------- */
 (function decorateExistingCards(){
   $$(".skill-card").forEach(card => {
     const thumb = $(".thumb", card);

@@ -10,19 +10,17 @@ if ($uid) {
     $st = db()->prepare('SELECT fuss_credits FROM students WHERE student_id=?');
     $st->execute([$uid]);
     $balance = (float)$st->fetchColumn();
-  } catch (Throwable $e) { /* ignore */ }
+  } catch (Throwable $e) {  }
 }
 
-/* Small site stats (best-effort) */
 $stats = ['members'=>null,'offers'=>null,'requests'=>null,'transactions'=>null];
 try {
   $stats['members']      = (int)db()->query("SELECT COUNT(*) FROM students WHERE active=1")->fetchColumn();
   $stats['offers']       = (int)db()->query("SELECT COUNT(*) FROM student_skills WHERE role='offered'")->fetchColumn();
   $stats['requests']     = (int)db()->query("SELECT COUNT(*) FROM student_skills WHERE role='requested'")->fetchColumn();
   $stats['transactions'] = (int)db()->query("SELECT COUNT(*) FROM transactions")->fetchColumn();
-} catch (Throwable $e) { /* ignore */ }
+} catch (Throwable $e) {  }
 
-/* Featured categories (top 6) */
 $cats = [];
 try {
   $cats = db()->query("SELECT category, COUNT(*) c
@@ -33,7 +31,6 @@ try {
                         LIMIT 6")->fetchAll();
 } catch (Throwable $e) {}
 
-/* Latest offers (6) */
 $offers = [];
 try {
   $sql = 'SELECT ss.id offer_id, s.name, s.category, st.full_name
@@ -46,7 +43,6 @@ try {
   $stmt = db()->prepare($sql); $stmt->execute(); $offers = $stmt->fetchAll();
 } catch (Throwable $e) {}
 
-/* Latest requested (6) */
 $reqs = [];
 try {
   $sql = 'SELECT ss.id request_id, s.name, s.category, st.full_name, st.student_id requester_id
@@ -60,7 +56,6 @@ try {
 } catch (Throwable $e) {}
 ?>
 
-<!-- HERO -->
 <section class="container" style="margin-top:24px;margin-bottom:28px">
   <div class="filter-card" style="display:grid;grid-template-columns:1.3fr 1fr;gap:24px;align-items:center">
     <div>
@@ -136,7 +131,6 @@ try {
   </div>
 </section>
 
-<!-- FEATURED CATEGORIES -->
 <section class="container" style="margin-bottom:28px">
   <h2 style="margin:0 0 12px">Popular categories</h2>
   <div style="display:flex;flex-wrap:wrap;gap:10px">
@@ -150,7 +144,6 @@ try {
   </div>
 </section>
 
-<!-- LATEST OFFERS -->
 <section class="container" style="margin-bottom:8px">
   <h2 style="margin:0 0 12px">Latest offers</h2>
   <div class="card-grid">
@@ -169,7 +162,6 @@ try {
   </div>
 </section>
 
-<!-- LATEST REQUESTS -->
 <section class="container" style="margin-bottom:40px">
   <h2 style="margin:0 0 12px">Students looking for…</h2>
   <div class="card-grid">

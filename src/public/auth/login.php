@@ -1,23 +1,20 @@
 <?php
-// src/public/auth/login.php
 declare(strict_types=1);
 
-$ROOT = dirname(__DIR__, 2); // points to /src
-require_once $ROOT . '/inc/init.inc.php';   // must set up db(), start session, etc.
-require_once $ROOT . '/inc/auth.inc.php';   // AUTH_LOGIN/AUTH_REGISTER + helpers
+$ROOT = dirname(__DIR__, 2); 
+require_once $ROOT . '/inc/init.inc.php';
+require_once $ROOT . '/inc/auth.inc.php'; 
 
 $pdo  = db();
-$next = $_GET['next'] ?? '/';                 // where to go after login
+$next = $_GET['next'] ?? '/';     
 $error = null;
 
-// If already logged in, bounce to next
 if (current_user_id()) {
   header('Location: ' . $next);
   exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  // Optional: if you have CSRF, call validate_csrf();
 
   $email = trim((string)($_POST['email'] ?? ''));
   $pass  = (string)($_POST['password'] ?? '');
@@ -31,29 +28,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $row = $st->fetch(PDO::FETCH_ASSOC);
 
       if (!$row || !password_verify($pass, $row['password'])) {
-        // Wrong credentials
         $error = 'Invalid email or password.';
       } else {
-        // Success: log in
         if (session_status() !== PHP_SESSION_ACTIVE) session_start();
         $_SESSION['user_id']   = (int)$row['student_id'];
         $_SESSION['full_name'] = (string)$row['full_name'];
-
-        // Optional: set admin flag here if you have a roles table
-        // $_SESSION['is_admin'] = (bool)$isAdmin;
 
         header('Location: ' . $next);
         exit;
       }
     } catch (Throwable $e) {
-      // Don’t leak details to user; log it and show generic error
       error_log('Login failed: ' . $e->getMessage());
       $error = 'Something went wrong while logging you in. Please try again.';
     }
   }
 }
 
-// Page title for header
 $pageTitle = 'Log in';
 include $ROOT . '/templates/header.php';
 ?>

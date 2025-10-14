@@ -1,5 +1,4 @@
 <?php
-// require db() from init.inc.php
 function recommend_helpers(PDO $pdo, int $me, int $limit = 12, bool $onlyMyZone = false): array {
   $sql = "
     WITH me_req AS (

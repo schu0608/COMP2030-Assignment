@@ -1,9 +1,7 @@
 <?php
-// --- bootstrap --------------------------------------------------------------
 $ROOT = dirname(__DIR__);
-require_once $ROOT . '/inc/init.inc.php';   // usually defines db(), auth helpers
+require_once $ROOT . '/inc/init.inc.php'; 
 
-// Fallbacks if your auth helpers aren’t present
 if (!function_exists('current_user_id')) {
   if (session_status() !== PHP_SESSION_ACTIVE) session_start();
   function current_user_id(): ?int {
@@ -21,11 +19,9 @@ if (!function_exists('require_login')) {
   }
 }
 
-// Decide which profile to show: ?u=ID or the current user
 $uid = $_GET['u'] ?? (current_user_id() ?? 0);
 $uid = (int)$uid;
 if ($uid <= 0) {
-  // if no ID and not logged in, send to login
   $uid = require_login();
 }
 
@@ -39,7 +35,6 @@ $q->execute([$uid]);
 $student = $q->fetch();
 if(!$student){ http_response_code(404); echo 'Profile not found'; exit; }
 
-// (1) Are we viewing our own profile? If so, show the Edit button.
 $self = (current_user_id() === (int)$student['student_id']);
 
 $s = db()->prepare(
@@ -65,7 +60,7 @@ $offers = $s->fetchAll();
 
 <h1><?= h($student['full_name']) ?></h1>
 
-<?php // (4) Show avatar if set ?>
+
 <?php if (!empty($student['profile_picture'])): ?>
   <p>
     <img

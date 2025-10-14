@@ -1,7 +1,6 @@
 <?php
-// public/admin/dashboard.php (and other admin pages)
-require_once dirname(__DIR__, 2) . '/inc/init.inc.php';   // or auth.inc.php – wherever require_login() lives
-$uid = require_login(); // now safe to call
+require_once dirname(__DIR__, 2) . '/inc/init.inc.php';  
+$uid = require_login(); 
 
 
 
@@ -23,7 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($id <= 0) {
     $msg = 'Please choose a student.';
   } else {
-    // fetch current balance + name
     $st = $pdo->prepare('SELECT fuss_credits, full_name FROM students WHERE student_id=?');
     $st->execute([$id]);
     $row = $st->fetch();
@@ -34,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $current = (float)$row['fuss_credits'];
       $name    = (string)$row['full_name'];
       $new     = $current + $amount;
-      if ($new < 0) $new = 0.0;                // never below 0
+      if ($new < 0) $new = 0.0;                
 
       $up = $pdo->prepare('UPDATE students SET fuss_credits=? WHERE student_id=?');
       if ($up->execute([$new, $id])) {
@@ -49,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
-// pull list of students for the select + table
 $students = $pdo->query('SELECT student_id, full_name, fuss_credits, active FROM students ORDER BY full_name')->fetchAll();
 ?>
 <!doctype html>
@@ -100,7 +97,6 @@ $students = $pdo->query('SELECT student_id, full_name, fuss_credits, active FROM
     <div class="msg"><?= $msg ?></div>
   <?php endif; ?>
 
-  <!-- Adjustment form -->
   <section class="card">
     <h2 style="margin:0 0 10px">Adjust Balance</h2>
     <form method="post" class="bar">
@@ -125,7 +121,6 @@ $students = $pdo->query('SELECT student_id, full_name, fuss_credits, active FROM
     <p class="sub" style="margin-top:6px">Tip: use positive numbers to add credits, negative numbers to deduct. Balances never go below 0.</p>
   </section>
 
-  <!-- Balances table -->
   <section class="card">
     <h2 style="margin:0 0 10px">Current Balances</h2>
     <div class="table-wrap">

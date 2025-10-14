@@ -3,6 +3,16 @@ require_once dirname(__DIR__, 2) . '/inc/init.inc.php';
 
 $uid = require_admin();
 $pdo = db();
+require_once dirname(__DIR__, 2) . '/inc/dbconn.inc.php';   
+
+$authPath = dirname(__DIR__, 2) . '/inc/auth.inc.php';
+if (file_exists($authPath)) {
+  require_once $authPath;
+}
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+  session_start();
+}
 
 if (!function_exists('h')) {
   function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
@@ -15,6 +25,47 @@ $zones = [];
 try {
   $zones = $pdo->query("SELECT zone_id, name FROM zones ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) { $zones = []; }
+if (!function_exists('require_login')) {
+  function require_login(): int {
+    if (empty($_SESSION['user_id'])) {
+      header('Location: /COMP2030-ASSIGNMENT/src/public/login.php');
+      exit;
+    }
+    return (int)$_SESSION['user_id'];
+  }
+}
+if (!function_exists('require_admin')) {
+  function require_admin(): int {
+    $uid = require_login();
+    if ($uid !== 1 && empty($_SESSION['is_admin'])) {
+      http_response_code(403);
+      echo 'Forbidden: admin only.';
+      exit;
+    }
+    return $uid;
+  }
+}
+
+$pdo = db();
+if (function_exists('require_admin')) {
+  $uid = require_admin();
+} elseif (function_exists('require_login')) {
+  $uid = require_login();
+} else {
+  $uid = (int)($_SESSION['user_id'] ?? 0);
+  if (!$uid) {
+    http_response_code(403);
+    exit('Forbidden (login required)');
+  }
+}
+
+$zones = [];
+try {
+  $zones = $pdo->query("SELECT zone_id, name FROM zones ORDER BY name")
+               ->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+  $zones = [];
+}
 
 $msg = "";
 

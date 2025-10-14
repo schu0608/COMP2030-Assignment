@@ -1,5 +1,4 @@
 <?php
-// /src/public/pm/new.php
 $ROOT = dirname(__DIR__, 2);
 require_once $ROOT . '/inc/init.inc.php';
 
@@ -12,7 +11,6 @@ function normalize_pair(int $a, int $b): array { return ($a < $b) ? [$a,$b] : [$
 $to = (int)($_GET['to'] ?? 0);
 $msg = "";
 
-/* If posting, create/reuse conversation and redirect to thread */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   validate_csrf();
   $to = (int)($_POST['to'] ?? 0);
@@ -21,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($to <= 0) {
     $msg = "Please choose a recipient.";
   } else {
-    // Verify recipient exists & active
     $st = $pdo->prepare("SELECT student_id, full_name FROM students WHERE student_id=? AND active=1");
     $st->execute([$to]);
     $peer = $st->fetch();
@@ -30,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
       [$a,$b] = normalize_pair($uid, $to);
 
-      // Find or create conversation
       $find = $pdo->prepare("SELECT conversation_id FROM conversations WHERE a_id=? AND b_id=?");
       $find->execute([$a,$b]);
       $cid = (int)$find->fetchColumn();
@@ -51,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
-/* Quick search for a person if no ?to */
 $s = trim((string)($_GET['s'] ?? ''));
 $people = [];
 if ($s !== '') {

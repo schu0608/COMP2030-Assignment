@@ -1,5 +1,4 @@
 <?php
-// /src/public/pm/index.php
 $ROOT = dirname(__DIR__, 2);
 require_once $ROOT . '/inc/init.inc.php';
 
@@ -7,23 +6,15 @@ $uid = require_login();
 $pdo = db();
 $pageTitle = 'Messages';
 
-$q = trim((string)($_GET['q'] ?? ''));          // search by name/email
+$q = trim((string)($_GET['q'] ?? ''));   
 $params = [':me' => $uid];
 
-// Build optional search filter
 $filter = '';
 if ($q !== '') {
   $filter = " AND (u.full_name LIKE :q OR u.email LIKE :q) ";
   $params[':q'] = "%{$q}%";
 }
 
-/*
-  Only show direct conversations that already have activity:
-  - user is either a_id or b_id
-  - EXISTS(SELECT 1 FROM pm_messages ...) guarantees at least one message
-  - last message body/time obtained with scalar subqueries
-  - unread_count = messages by the OTHER user with read_at IS NULL
-*/
 $sql = "
   SELECT
     c.conversation_id,

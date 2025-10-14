@@ -1,7 +1,6 @@
 <?php
-// public/admin/dashboard.php (and other admin pages)
-require_once dirname(__DIR__, 2) . '/inc/init.inc.php';   // or auth.inc.php – wherever require_login() lives
-$uid = require_login(); // now safe to call
+require_once dirname(__DIR__, 2) . '/inc/init.inc.php';
+$uid = require_login();
 
 $uid = require_login();
 if (!function_exists('is_admin') ? $uid !== 1 : !is_admin($uid)) {
@@ -12,7 +11,6 @@ if (!function_exists('is_admin') ? $uid !== 1 : !is_admin($uid)) {
 $pdo = db();
 $msg = "";
 
-/* --- detect whether the column is `content_type` or `type` --- */
 $typeCol = 'content_type';
 try {
   $stmt = $pdo->query("
@@ -27,14 +25,11 @@ try {
     $typeCol = $row['COLUMN_NAME'];
   }
 } catch (Throwable $e) {
-  // keep default
 }
 
-/* --- actions --- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (function_exists('validate_csrf')) { validate_csrf(); }
 
-  // Single remove: one submit button with name=remove_one and value=<id>
   if (isset($_POST['remove_one'])) {
     $id = (int)$_POST['remove_one'];
     if ($id > 0) {
@@ -46,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 
-  // Bulk remove: checkboxes named ids[]
   if (isset($_POST['bulk_remove']) && !empty($_POST['ids']) && is_array($_POST['ids'])) {
     $ids = array_values(array_filter(array_map('intval', $_POST['ids']), static fn($n)=>$n>0));
     if ($ids) {
@@ -60,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
-/* --- fetch flagged items --- */
 $rows = [];
 try {
   $sql = "SELECT id, {$typeCol} AS ctype, content, reported_by, created_at

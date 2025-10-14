@@ -1,4 +1,4 @@
-/* ---------- 1) Design tokens -------------------------------------------- */
+
 :root{
   --brand-gold:#FFCC00; --brand-gold-600:#E0B400; --brand-gold-700:#B89300;
   --brand-navy:#0E1B2D; --brand-navy-600:#0A1524; --brand-navy-700:#08101C;
@@ -19,13 +19,11 @@
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
 }
 
-/* Optional alternate theme (Teal + Slate) */
 body.theme-teal{
   --primary:#0f766e; --primary-600:#0a615a; --primary-700:#084e48;
   --accent:#0891b2; --accent-600:#0e7490;
 }
 
-/* Automatic dark-mode */
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#0b1220; --surface:#0f172a; --card:#111827; --muted-bg:#0b1020; --border:#1f2937;
@@ -35,7 +33,6 @@ body.theme-teal{
   }
 }
 
-/* ---------- 2) Base ------------------------------------------------------ */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 var(--font);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -47,13 +44,11 @@ a:hover{text-decoration:underline}
 .notice{background:var(--muted-bg);border:1px solid var(--border);padding:var(--s-3) var(--s-4);border-radius:var(--radius)}
 :where(a,button,input,select,textarea):focus-visible{outline:3px solid var(--ring);outline-offset:2px}
 
-/* ---------- 3) Header / Masthead ---------------------------------------- */
 .masthead{border-bottom:1px solid var(--border);background:var(--surface)}
 .masthead-top{display:flex;align-items:center;justify-content:space-between;padding:var(--s-3) 0}
 .brand{display:flex;gap:var(--s-3);align-items:center;color:inherit}
 .brand:hover{text-decoration:none}
 
-/* Brand mark image */
 .brand-mark{
   width:44px;height:44px;display:block;border-radius:10px;
   border:1px solid color-mix(in srgb,var(--border) 70%, var(--primary) 30%);
@@ -85,7 +80,6 @@ a:hover{text-decoration:underline}
   .tabs a.active{background:var(--accent);border-color:var(--accent);color:var(--brand-navy-700)}
 }
 
-/* ---------- 4) Buttons --------------------------------------------------- */
 .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;text-decoration:none;transition:transform .02s ease, box-shadow .2s ease, background .2s ease}
 .btn:hover{box-shadow:var(--shadow);text-decoration:none}
 .btn:active{transform:translateY(1px)}
@@ -100,7 +94,6 @@ a:hover{text-decoration:underline}
   .btn--primary{background:var(--accent);border-color:var(--accent);color:var(--brand-navy-700)}
 }
 
-/* ---------- 5) Forms ----------------------------------------------------- */
 label,.label{font-weight:700;color:var(--text)}
 input,select,textarea{width:100%;max-width:100%;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:10px;padding:10px 12px;font:inherit}
 input::placeholder,textarea::placeholder{color:#8a95a6}
@@ -114,7 +107,6 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px var(--
   input::placeholder,textarea::placeholder{color:#9fb0c5}
 }
 
-/* ---------- 6) Filters / chips / pill switch ---------------------------- */
 .filter-card{border:1px solid var(--border);border-radius:var(--radius);padding:var(--s-4);background:var(--surface);box-shadow:var(--shadow)}
 .stack>*+*{margin-top:var(--s-4)} .stack-sm>*+*{margin-top:var(--s-2)}
 .chips{display:flex;flex-wrap:wrap;gap:var(--s-2)}
@@ -132,7 +124,6 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px var(--
   .pill-switch button.active{background:var(--accent);border-color:var(--accent);color:var(--brand-navy-700)}
 }
 
-/* Fieldset (Skill level) */
 .filter-card fieldset{border:1px solid var(--border);border-radius:12px;padding:18px 14px 12px;background:transparent}
 .filter-card fieldset:focus-within{box-shadow:0 0 0 3px var(--ring)}
 .filter-card legend{padding:4px 10px;border-radius:8px;background:var(--muted-bg);color:var(--text);border:1px solid var(--border);font-weight:700;letter-spacing:.01em}
@@ -148,7 +139,6 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px var(--
   .filter-card input[type="radio"]{accent-color:var(--accent)}
 }
 
-/* ---------- 7) Grid + Cards --------------------------------------------- */
 .browse-layout{display:grid;grid-template-columns:280px 1fr;gap:var(--s-4)}
 @media (max-width:900px){.browse-layout{grid-template-columns:1fr}}
 
@@ -159,7 +149,6 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px var(--
 .skill-card{display:grid;grid-auto-rows:min-content;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);overflow:hidden;text-decoration:none;color:inherit}
 .skill-card:hover{transform:translateY(-1px);box-shadow:0 6px 26px rgba(0,0,0,.10);text-decoration:none}
 
-/* FULL-BLEED CATEGORY IMAGE THUMBNAILS */
 .skill-card .thumb{height:140px;background-color:#fafafa;background-size:cover;background-position:center;background-repeat:no-repeat}
 @media (prefers-color-scheme: dark){.skill-card .thumb{background-color:#0F172A}}
 
@@ -170,7 +159,6 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px var(--
 .skill-card .rating{color:var(--accent-600);font-weight:700;font-size:.95rem}
 .skill-card .rating .stars{letter-spacing:.1em}
 
-/* ---------- 8) Requests page (cards + badges) --------------------------- */
 .filter-row{display:flex;align-items:center;gap:10px;margin:12px 0}
 input.switch{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:44px;height:24px;border-radius:999px;background:var(--muted-bg);border:1px solid var(--border);position:relative;cursor:pointer}
 input.switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s ease}
@@ -201,7 +189,6 @@ input.switch:checked::after{transform:translateX(20px)}
   .badge--pending,.badge--confirm{color:#0b1220}
 }
 
-/* ---------- 9) Sections, footer, helpers -------------------------------- */
 section + h2{margin-top:var(--s-6)}
 .site-footer{color:var(--text-muted);padding:var(--s-6) 0}
 .grid{display:grid;gap:var(--s-3)}
@@ -210,10 +197,8 @@ section + h2{margin-top:var(--s-6)}
 .list{list-style:none;padding:0;margin:0}
 .list li+li{margin-top:var(--s-2)}
 
-/* Nav tab focus ring boost */
 .tabs a:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring)}
 
-/* --- Fix: don't style checkboxes like text inputs --- */
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 select,
 textarea {
@@ -227,7 +212,6 @@ textarea {
   font: inherit;
 }
 
-/* Reset + accessible styling for checkbox/radio */
 input[type="checkbox"],
 input[type="radio"] {
   width: auto;
@@ -236,7 +220,7 @@ input[type="radio"] {
   margin: 0;
   border: none;
   background: transparent;
-  accent-color: var(--accent);   /* brand colour for the tick */
+  accent-color: var(--accent); 
 }
 input[type="checkbox"]:focus-visible,
 input[type="radio"]:focus-visible {
@@ -244,7 +228,6 @@ input[type="radio"]:focus-visible {
   outline-offset: 2px;
 }
 
-/* Compact “flag” chip used in messages filter */
 .flag {
   display: inline-flex;
   align-items: center;
@@ -258,32 +241,27 @@ input[type="radio"]:focus-visible {
 .flag:focus-within { box-shadow: 0 0 0 3px var(--ring); }
 .flag input { width: 1.1rem; height: 1.1rem; }
 
-/* Dark-mode contrast boost */
 @media (prefers-color-scheme: dark) {
   .flag {
-    background: #1a2438;      /* slightly lighter than page bg */
-    border-color: #334155;    /* slate-600 */
+    background: #1a2438;     
+    border-color: #334155;   
   }
   input[type="checkbox"],
-  input[type="radio"] { accent-color: #f5b400; } /* gold tick in dark mode */
+  input[type="radio"] { accent-color: #f5b400; } 
 }
-/* ===== Accessible link colors ===== */
 
-/* 1) Link tokens */
 :root{
-  --link:        var(--primary);   /* light theme base */
+  --link:        var(--primary);  
   --link-hover:  var(--accent-600);
 }
 
-/* Dark-mode: use bright gold for strong contrast on slate bg */
 @media (prefers-color-scheme: dark){
   :root{
-    --link:       #f5b400;         /* Flinders gold */
-    --link-hover: #ffd24a;         /* lighter on hover */
+    --link:       #f5b400;      
+    --link-hover: #ffd24a;       
   }
 }
 
-/* 2) Base link styling */
 a{
   color: var(--link);
   text-decoration: underline;
@@ -294,14 +272,13 @@ a:hover{
   color: var(--link-hover);
   text-decoration-thickness: 3px;
 }
-a:visited{ color: var(--link); }        /* keep contrast, no dimming */
+a:visited{ color: var(--link); }       
 a:focus-visible{
   outline: 3px solid var(--ring);
   outline-offset: 2px;
-  border-radius: 4px;                   /* nicer focus ring corner */
+  border-radius: 4px;                
 }
 
-/* 3) Links inside subtle surfaces (e.g., .notice) */
 .notice a{
   color: var(--link);
   font-weight: 600;
@@ -310,7 +287,6 @@ a:focus-visible{
   color: var(--link-hover);
 }
 
-/* 4) Optional: button-like text links */
 .btn-link{
   appearance: none;
   border: 0;
@@ -324,10 +300,8 @@ a:focus-visible{
 }
 .btn-link:hover{ color: var(--link-hover); }
 
-/* ===== Buttons: high-contrast primary ===== */
 a.btn, button.btn { color: var(--text); }
 
-/* Light & dark defaults: make primary buttons dark with white text */
 .btn--primary,
 .btn--primary:link,
 .btn--primary:visited {
@@ -336,7 +310,6 @@ a.btn, button.btn { color: var(--text); }
   color: #fff;
 }
 
-/* Hover + focus for accessibility */
 .btn--primary:hover {
   background: color-mix(in srgb, var(--primary) 85%, #ffffff 15%);
   text-decoration: none;
@@ -346,19 +319,17 @@ a.btn, button.btn { color: var(--text); }
   box-shadow: 0 0 0 3px var(--ring);
 }
 
-/* Dark mode: nudge to vivid blue for extra contrast */
 @media (prefers-color-scheme: dark) {
   .btn--primary,
   .btn--primary:link,
   .btn--primary:visited {
-    background: #2563eb;      /* blue-600 */
+    background: #2563eb;      
     border-color: #2563eb;
     color: #ffffff;
   }
-  .btn--primary:hover { background: #1d4ed8; } /* blue-700 */
+  .btn--primary:hover { background: #1d4ed8; }
 }
 
-/* --- Unread badge on nav --- */
 .tabs a { position: relative; }
 
 .badge {
@@ -372,8 +343,8 @@ a.btn, button.btn { color: var(--text); }
   font-size: 11px;
   line-height: 1;
   font-weight: 700;
-  background: var(--accent);    /* gold in light / themed; in dark use vivid */
-  color: #0b1220;               /* dark text on bright badge */
+  background: var(--accent);  
+  color: #0b1220;      
   border: 1px solid color-mix(in srgb, var(--accent) 70%, #000 30%);
   box-shadow: 0 1px 2px rgba(0,0,0,.25);
 }
@@ -386,21 +357,19 @@ a.btn, button.btn { color: var(--text); }
 
 @media (prefers-color-scheme: dark) {
   .badge {
-    background: #fbbf24;       /* amber-400 for better contrast on dark */
+    background: #fbbf24;     
     border-color: #d97706;
-    color: #111827;            /* slate-900 */
+    color: #111827;          
   }
 }
-/* ===== NAV PILLS: one consistent look (PUT THIS AT THE VERY END) ===== */
 
-/* container */
 .masthead .tabs{
   display:flex;
   align-items:center;
   gap:16px;
 }
 
-/* base pill */
+
 .masthead .tabs a{
   display:inline-flex;
   align-items:center;
@@ -412,11 +381,10 @@ a.btn, button.btn { color: var(--text); }
   border-radius:12px;
   background:var(--muted-bg);
   color:var(--text);
-  text-decoration:none !important;   /* ignore global link underline */
+  text-decoration:none !important; 
   position:relative;
 }
 
-/* hover + focus (all pills identical) */
 .masthead .tabs a:hover,
 .masthead .tabs a:focus-visible{
   background:var(--primary);
@@ -425,14 +393,12 @@ a.btn, button.btn { color: var(--text); }
   box-shadow:0 0 0 3px var(--ring);
 }
 
-/* active tab (same as hover so everything matches) */
 .masthead .tabs a.active{
   background:var(--primary);
   color:#fff;
   border-color:var(--primary);
 }
 
-/* Dark mode: same behavior, slight base contrast */
 @media (prefers-color-scheme: dark){
   .masthead .tabs a{
     background:#1a2438;
@@ -442,12 +408,11 @@ a.btn, button.btn { color: var(--text); }
   .masthead .tabs a:hover,
   .masthead .tabs a:focus-visible,
   .masthead .tabs a.active{
-    background:#2563eb;      /* vivid blue on hover/active */
+    background:#2563eb;    
     border-color:#2563eb;
     color:#fff;
   }
 }
-/* Nav list reset */
 .masthead .tabs,
 .masthead .tabs ul { margin:0; padding:0; }
 .masthead .tabs li { list-style: none; }

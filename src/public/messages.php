@@ -1,5 +1,4 @@
 <?php
-// src/public/messages.php
 require_once dirname(__DIR__).'/inc/init.inc.php';
 
 $uid = require_login();
@@ -9,16 +8,9 @@ $incomingOnly = isset($_GET['incoming']) && $_GET['incoming'] === '1';
 
 $pageTitle = 'Requests';
 
-/**
- * Fetch transactions for this user by status bucket.
- *
- * @param array $statuses list of status strings
- * @return array
- */
 function fetch_requests(PDO $pdo, int $uid, array $statuses, bool $incomingOnly): array {
   if (!$statuses) return [];
 
-  // IN (?, ?, ?) list for statuses
   $in = implode(',', array_fill(0, count($statuses), '?'));
 
   $sql = "
@@ -55,7 +47,6 @@ function fetch_requests(PDO $pdo, int $uid, array $statuses, bool $incomingOnly)
   return $st->fetchAll();
 }
 
-// Buckets
 $OPEN_STATUSES = ['pending','accepted','proposed','confirm_requester','confirm_provider'];
 $DONE_STATUSES = ['confirmed'];
 
@@ -77,13 +68,11 @@ include dirname(__DIR__).'/templates/header.php';
 </form>
 
 <?php
-// Helper to render one request card
 function req_card(array $r): void {
-  $dir  = $r['direction']; // incoming/outgoing
+  $dir  = $r['direction']; 
   $with = $r['partner_name'];
   $withId = (int)$r['partner_id'];
 
-  // status badge colour choices (map to utility classes already in style.css)
   $status = (string)$r['status'];
   $badgeClass = match ($status) {
     'pending'            => 'badge badge--warn',
@@ -145,7 +134,6 @@ function req_card(array $r): void {
 <?php endif; ?>
 
 <style>
-  /* Small component styling to complement your style.css */
   .request-card__head {
     display:flex; align-items:center; justify-content:space-between; gap: 12px;
     margin-bottom: 10px;
