@@ -83,7 +83,7 @@ This stage of usability testing evaluated how intuitively new users could perfor
 ---
 
 ### Participant Insights
-All participants demonstrated competent digital literacy but expressed varying levels of confidence. Power users (e.g., P3) progressed rapidly, while novice users (P1, P2) required initial guidance in identifying core actions.
+All participants demonstrated competent digital literacy but expressed varying levels of confidence. Power users (e.g. P3) progressed rapidly, while novice users (P1, P2) required initial guidance in identifying core actions.
 
 ---
 
@@ -110,9 +110,10 @@ The mean SEQ score across all tasks was **5.8/7**, indicating a generally positi
    Participants were unclear about the progress of skill requests.  
    → *Recommendation:* Implement a request timeline (Sent → Confirmed → Completed) with consistent visual chips.
 
-5. **Label and Navigation Inconsistency**  
-   Inconsistent phrasing (“Post Skill” vs. “Add Skill”) created minor confusion.  
-   → *Recommendation:* Standardise terminology across the interface.
+5. **Lack of Admin Accountability (T6)**  
+   Admins had no visibility of past moderation or credit changes, reducing transparency and control.
+
+   → *Recommendation:* Add an admin audit trail to log all moderation and credit adjustments, ensuring traceability and oversight from the dashboard.
 
 ---
 
@@ -129,7 +130,7 @@ These findings reinforce a key human-factors principle: *users rely on visible f
 2. Credit Feedback Visibility (High Impact)  
 3. Error Clarity in Forms (Medium–High Impact)  
 4. Request Status Visibility (Medium Impact)  
-5. Label Consistency (Low Impact)
+5. Lack of Admin Accountability (Low Impact)
 
 ---
 
@@ -153,12 +154,16 @@ Following usability testing, several front-end and backend refinements were deve
 **Change:** Introduced a bold, right-aligned filled button with hover and focus effects and added a logical tab-order sequence for keyboard users.  
 **Justification:** Reinforces *visibility of system functionality* and supports accessibility compliance.
 
+![UI/UX Improvement — 1/5 Improve visibility for primary actions](images/UI_UX_Improvements1of5.png)
+
 ---
 
 ### 2. Credit Feedback and Transparency
 **Problem:** Unclear confirmation after credit transactions.  
 **Change:** Added real-time toast notifications and a persistent credit balance display in the navigation bar. Implemented a transaction activity log using backend queries.  
 **Justification:** Implements *system status visibility* and supports users’ mental models of transaction confirmation.
+
+![UI/UX Improvement — 2/5 Strengthen feedback and system status cues](images/UI_UX_Improvements2of5.png)
 
 ---
 
@@ -167,6 +172,8 @@ Following usability testing, several front-end and backend refinements were deve
 **Change:** Integrated client-side and server-side validation rules, providing contextual error tips inline.  
 **Justification:** Aligns with *error prevention* and *user control* principles.
 
+![UI/UX Improvement — 3/5 Clarity in form validation and error recovery](images/UI_UX_Improvements3of5.png)
+
 ---
 
 ### 4. Request Status Feedback
@@ -174,12 +181,18 @@ Following usability testing, several front-end and backend refinements were deve
 **Change:** Added status chips (Sent, Confirmed, Completed) dynamically linked to backend state updates.  
 **Justification:** Increases *system transparency* and reduces cognitive load.
 
+![UI/UX Improvement — 4/5 Improve visibility for request actions](images/UI_UX_Improvements4of5.png)
+
 ---
 
-### 5. Label Standardisation
-**Problem:** Inconsistent terminology between “Add Skill” and “Post Skill.”  
-**Change:** Conducted an in-depth audit; unified language across templates.  
-**Justification:** Promotes *recognition over recall* and consistent navigation cues.
+### 5. Action Log for All Admin Decisions
+**Problem:** Admin users had no clear visibility into prior moderation or credit adjustment actions, reducing system transparency and accountability.
+
+**Change:** Added an admin audit trail displaying all moderation and credit adjustments directly on the dashboard.
+
+**Justification:** Strengthened traceability and trust by making backend operations transparent and accountable.
+
+![UI/UX Improvement — 5/5 Admin action log for transparency](images/UI_UX_Improvements5of5.png)
 
 ---
 
